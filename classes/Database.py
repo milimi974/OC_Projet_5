@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-#import dependences
+# import dependences
 # Mysql packages
 import mysql.connector
+
 
 class Database:
     """ That class connect and manage connection to database"""
 
     # Connection configurations to database
+    # Class attributes
     config = {
         'user': 'c2python',
         'password': '99#database#99',
@@ -18,10 +20,14 @@ class Database:
     }
 
     def __init__(self):
-        pass
+        """ Constructor initialise instance attributes """
+        self.db = False
 
     @property
     def connect(self):
+        """ Property connect instance to Database """
+
+        # Exception try to connect Database
         try:
             self.db = mysql.connector.connect(**self.config)
             print('DB connected')

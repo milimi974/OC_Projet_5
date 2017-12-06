@@ -12,7 +12,9 @@ from classes.Shop import Shop
 class Main:
     """ Main class manage Application """
 
-    def __init__(self, name, lastname):
+    def __init__(self):
+        """ Constructor initialize module """
+        # Create Database module
         self.db = DB()
 
 
@@ -20,8 +22,10 @@ class Main:
         pass
 
     def run(self):
+        """ public methode start application"""
+
         print("That Run")
         self.db.connect
 
-main = Main("yohan","solon")
+main = Main()
 main.run()
