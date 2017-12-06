@@ -9,7 +9,7 @@ class Main:
     """ Main class manage Application """
 
     def __init__(self, name, lastname):
-        pass
+        self.db = classes.Database()
 
     def run(self):
         print("That Run")
