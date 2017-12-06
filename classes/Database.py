@@ -3,26 +3,27 @@
 
 #import dependences
 # Mysql packages
-import pymysql.cursors
+import mysql.connector
 
 class Database:
     """ That class connect and manage connection to database"""
 
+    # Connection configurations to database
+    config = {
+        'user': 'c2python',
+        'password': '99#database#99',
+        'host': '198.245.49.203',
+        'database': 'c2pure_beurre',
+        'raise_on_warnings': True,
+    }
+
     def __init__(self):
-        self.host = ''
-        self.port = 3306
-        self.user = ''
-        self.passwd = ''
-        self.dbname = ''
+        pass
 
     @property
     def connect(self):
         try:
-            self.db = pymysql.connect(host=self.host,
-                             user=self.user,
-                             passwd=self.passwd,
-                             db=self.dbname,
-                             port=self.port)
+            self.db = mysql.connector.connect(**self.config)
             print('DB connected')
         except:
             print('Error connected')

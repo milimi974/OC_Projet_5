@@ -14,10 +14,7 @@ class Main:
 
     def __init__(self, name, lastname):
         self.db = DB()
-        self.db.dbname = "keskonmamu803"
-        self.db.name = "keskonmamu803"
-        self.db.passwd = "99Admin99"
-        self.db.host = "keskonmamu803.mysql.db"
+
 
     def __set_module(self):
         pass
