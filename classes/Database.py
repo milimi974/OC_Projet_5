@@ -6,8 +6,10 @@
 import mysql.connector
 
 
-class Database:
-    """ That class connect and manage connection to database"""
+class Database(object):
+    """ That class connect and manage connection to database
+        and inherit object parent
+    """
 
     # Connection configurations to database
     # Class attributes
@@ -19,12 +21,23 @@ class Database:
         'raise_on_warnings': True,
     }
 
+    def __new__(cls):
+        """ Defined the class has Singleton """
+        # Control attribute name if instance doesn't exist return nes instance
+        if not hasattr(cls, 'instance'):
+             cls.instance = super(Database, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self):
         """ Constructor initialise instance attributes """
+
+        # Init db attribute
         self.db = False
+        # Connect instance self.db to DB
+        self.__connect
 
     @property
-    def connect(self):
+    def __connect(self):
         """ Property connect instance to Database """
 
         # Exception try to connect Database
