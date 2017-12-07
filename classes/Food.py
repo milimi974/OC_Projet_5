@@ -14,7 +14,7 @@ class Food:
         pass
 
     def __add_categories(self):
-        """ create a new category object then add to """
+        """ create a new category object then add to attribute list"""
         pass
 
     def __add_shops(self):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/_env/bin/python3.5
 # coding: utf-8
 
 # load dependences
@@ -7,9 +7,18 @@ from classes.Database import Database as DB
 from classes.User import User
 from classes.Food import Food
 
+# Import modules
+import csv # Manage cvs file
+import urllib.request # For download cvs file from http://
 
 class Main:
     """ Main class manage Application """
+
+    # Class attributes
+    config = {
+        'max_entries': 50,
+        'csv_uri': 'http://world.openfoodfacts.org/data/en.openfoodfacts.org.products.csv'
+    }
 
     def __init__(self):
         """ Constructor initialize module """
@@ -17,14 +26,20 @@ class Main:
         # Create Database module
         self.db = DB()
 
-        # Max insert or update request to DB
-        self.max_req = 50
-
     def update_db(self):
         """ Public methode for updating database from csv"""
 
+        # vars
+        new_food = []
+        update_food = []
 
         # Read Csv file from url
+        with open('./uploads/food.csv', newline='', encoding='utf-8') as csvfile:
+
+            reader = csv.DictReader(csvfile, delimiter='\t')
+            for row in reader:
+
+                pass
 
         # Start loop to read each line
 
@@ -48,41 +63,23 @@ class Main:
 
         # Reset max line to read
 
-        pass
+
     def __set_module(self):
         pass
 
+    @property
+    def upload_csv(self):
+        """ That property simply download csv file source to local """
+
+        urllib.request.urlretrieve(self.config['csv_uri'], './uploads/food.csv')
+
+    @property
     def run(self):
         """ public methode start application"""
 
+        self.update_db()
         print("That Run")
 
 
 main = Main()
-main.run()
-
-class Singleton(object):
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-             cls.instance = super(Singleton, cls).__new__(cls)
-        return cls.instance
-
-    def __init__(self):
-        self.count = 0
-
-    def add(self):
-        self.count += 1
-
-    def result(self):
-        return self.count
-
-one = Singleton()
-two = Singleton()
-
-one.add()
-two.add()
-two.add()
-
-print(one.count)
-print(two.count)
-print(one.count)
+main.run
