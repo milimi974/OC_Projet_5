@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# load dependences
+# load dependencies
 # Import classes packages
 from classes.Category import Category
 from classes.Shop import Shop
@@ -16,32 +16,35 @@ class Food(Model):
 
     # Database table name
     table = 'Foods'
+    fields = [
+        'PK_id',
+        'code',
+        'link',
+        'name',
+        'description',
+        'level',
+        'created',
+        'modified',
+    ]
 
-    def __init__(self,args):
+    def __init__(self, args={}):
         """ Initialized Food object
 
         Keyword arguments:
         args -- list of product fields value
 
         """
-        # Instanciate Parent
-        super().__init__()
+        # Instantiate Parent
+        super().__init__(args)
 
         # init attributes
-        self.PK_id = args['PK_id']
-        self.code = args['code']
-        self.link = args['link']
-        self.name = args['name']
-        self.description = args['description']
-        self.level = args['level']
-        self.created = args['created']
-        self.modified = args['modified']
-
-        self.categories = self.__add_categories(args['categories'])
-        self.shops = self.__add_shops(args['shops'])
+        if 'categories' in args:
+            self.categories = self.__make_categories(args['categories'])
+        if 'shops' in args:
+            self.shops = self.__make_shops(args['shops'])
 
 
-    def __add_categories(self,categories):
+    def __make_categories(self,categories):
         """ create a new category object then add to attribute list
 
         Keyword arguments:
@@ -61,7 +64,8 @@ class Food(Model):
                     response.append(Category(category))
         return response
 
-    def __add_shops(self,shops):
+
+    def __make_shops(self,shops):
         """ create a new shop object then add to attribute list
 
         Keyword arguments:
@@ -78,3 +82,8 @@ class Food(Model):
             for shop in shops:
                 response.append(Shop(shop))
         return response
+
+    @property
+    def _get_name(self):
+        """ property return object attribute name"""
+        return self.name

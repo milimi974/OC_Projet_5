@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# import dependences
+# import dependencies
 # Mysql packages
 import mysql.connector
 
@@ -37,6 +37,46 @@ class Database(object):
         self.connected = False
         # Connect instance self.db to DB
         self.__connect
+
+    def save(self, tablename, data):
+        """ Method save data in database
+
+        Keyword arguments:
+        tablename -- string name of table
+        data -- object or [object] to save
+
+        """
+        pass
+
+    def update(self, tablename, data):
+        """ Method update data in database
+
+        Keyword arguments:
+        tablename -- string name of table
+        data -- object or [object] to update
+
+        """
+        pass
+
+    def select(self, tablename, conditions):
+        """ Method save data in database
+
+        Keyword arguments:
+        tablename -- string name of table
+        conditions -- dict of conditions to apply on request
+
+        """
+        pass
+
+    def query(self, tablename, request):
+        """ Method save data in database
+
+        Keyword arguments:
+        tablename -- string name of table
+        request -- string a sql request
+
+        """
+        pass
 
     @property
     def __connect(self):

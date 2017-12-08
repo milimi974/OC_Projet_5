@@ -6,7 +6,17 @@ from classes.Model import Model
 
 
 class Shop(Model):
+    """ Class associate table Shops """
 
-    def __init__(self):
-        # Instanciate Parent
-        super().__init__()
+    # Database table name
+    table = 'Shops'
+
+    # Fields name on db
+    fields = [
+        'PK_id',
+        'name'
+    ]
+
+    def __init__(self, args={}):
+        # Instantiate Parent
+        super().__init__(args)
