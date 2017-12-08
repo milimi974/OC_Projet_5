@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.5
 # coding: utf-8
 
 # import dependencies
@@ -21,24 +21,24 @@ class Database(object):
         'raise_on_warnings': True,
     }
 
+    # var contain instance of DB
+    __instance = None
+
     def __new__(cls):
         """ Defined the class has Singleton """
         # Control attribute name if instance doesn't exist return nes instance
 
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(Database, cls).__new__(cls)
-        return cls.instance
+        if Database.__instance is None:
+            Database.__instance = object.__new__(cls)
+            # Init db attribute
+            Database.__instance.db = False
+            Database.__instance.connected = False
+            # Connect instance self.db to DB
+            Database.__instance.__connect
+        return Database.__instance
 
-    def __init__(self):
-        """ Constructor initialise instance attributes """
-
-        # Init db attribute
-        self.db = False
-        self.connected = False
-        # Connect instance self.db to DB
-        self.__connect
-
-    def save(self, tablename, data):
+    @staticmethod
+    def save(tablename, fields, data):
         """ Method save data in database
 
         Keyword arguments:
@@ -46,9 +46,39 @@ class Database(object):
         data -- object or [object] to save
 
         """
-        pass
+        DB = Database()
+        query = DB.cursor
+        # if doesn't connected to db break
+        if not DB.is_connected:
+            print('Error connected')
+            return False
+        if 'PK_id' in fields:
+            fields.remove('PK_id')
+        prepare = ['%s' for n in fields]
+        req = ('INSERT INTO {} ({}) VALUES ({})'.format(tablename, ','.join(fields), ','.join(prepare)))
 
-    def update(self, tablename, data):
+
+        if type(data) == list:
+            q = []
+            for d in data:
+                args = d.__dict__
+                p = []
+                for field in fields:
+                    p.append(args[field])
+                q.append(tuple(p))
+
+            query.executemany(req,q)
+        else:
+            p = []
+            for field in fields:
+                p.append(data[field])
+            query.execute(req, tuple(p))
+
+        DB.cnx.commit()
+        query.close()
+
+    @staticmethod
+    def update(tablename, fields, data):
         """ Method update data in database
 
         Keyword arguments:
@@ -56,9 +86,14 @@ class Database(object):
         data -- object or [object] to update
 
         """
-        pass
+        DB = Database()
+        # if doesn't connected to db break
+        if not DB.is_connected:
+            print('Error connected')
+            return False
 
-    def select(self, tablename, conditions):
+    @staticmethod
+    def select(tablename, conditions):
         """ Method save data in database
 
         Keyword arguments:
@@ -66,9 +101,14 @@ class Database(object):
         conditions -- dict of conditions to apply on request
 
         """
-        pass
+        DB = Database()
+        # if doesn't connected to db break
+        if not DB.is_connected:
+            print('Error connected')
+            return False
 
-    def query(self, tablename, request):
+    @staticmethod
+    def query(tablename, request):
         """ Method save data in database
 
         Keyword arguments:
@@ -76,7 +116,11 @@ class Database(object):
         request -- string a sql request
 
         """
-        pass
+        DB = (Database())
+        # if doesn't connected to db break
+        if not DB.is_connected:
+            print('Error connected')
+            return False
 
     @property
     def __connect(self):
@@ -95,4 +139,14 @@ class Database(object):
     @property
     def is_connected(self):
         """ Return connection status """
-        return self.is_connected
+        return self.connected
+
+    @property
+    def cursor(self):
+        """ Return connection cursor """
+        return self.db.cursor()
+
+    @property
+    def cnx(self):
+        """ Return connection """
+        return self.db

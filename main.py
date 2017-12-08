@@ -10,6 +10,7 @@ from classes.Food import Food
 # Import modules
 import csv  # Manage cvs file
 import urllib.request   # For download cvs file from http://
+import datetime
 
 
 class Main:
@@ -55,7 +56,9 @@ class Main:
                     break
 
             # Create last data
-            Main.__create_foods(csv_foods)
+            print('------- Last Save -----')
+            if len(csv_foods) > 0:
+                Main.__create_foods(csv_foods)
 
     @staticmethod
     def __create_foods(foods):
@@ -94,6 +97,13 @@ class Main:
         row -- list of food fields value
 
         """
+        # Make time to database format
+        created = datetime.datetime.fromtimestamp(
+                int(row['created_t'])
+            ).strftime('%Y-%m-%d %H:%M:%S')
+        updated = datetime.datetime.fromtimestamp(
+            int(row['last_modified_t'])
+        ).strftime('%Y-%m-%d %H:%M:%S')
 
         # Arguments for instantiate Food
         args = {
@@ -103,8 +113,8 @@ class Main:
             'name': row['product_name'],
             'description': row['ingredients_text'],
             'level': row['nutrition_grade_fr'],
-            'created': row['created_t'],
-            'modified': row['last_modified_t'],
+            'created': created,
+            'modified': updated,
             'shops': row['stores'],
             'categories': row['categories_fr'],
         }

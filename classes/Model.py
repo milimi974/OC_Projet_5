@@ -32,13 +32,13 @@ class Model(object):
             if hasattr(self, 'PK_id') and int(self.PK_id) > 0:
                 # Update data
                 print('Update')
-                (DB()).update(self.table, self)
+                DB.update(self.table, self.fields, self)
             else:
                 # Save data
                 # if isset primary key id unset
                 self.PK_id = None
                 print('Save')
-                (DB()).save(self.table, self)
+                DB.save(self.table, self.fields, self)
 
     def find(self, request):
         """ Method search data in bdd
@@ -46,6 +46,7 @@ class Model(object):
         Method arguments:
         request : dic with actions and fields
         """
+        pass
 
     def bulk(self, data, update=False):
         """ method for saving a bulk data
@@ -56,6 +57,8 @@ class Model(object):
         """
 
         if not update:
-            (DB()).save(self.table, data)
+            print('Save')
+            DB.save(self.table, self.fields, data)
         else:
-            (DB()).update(self.table, data)
+            print('Update')
+            DB.update(self.table, self.fields, data)
