@@ -69,7 +69,7 @@ class Main:
 
         """
         # save all data
-        (Food()).bulk(foods)
+        (Food()).bulk(foods,True)
 
         # Add name of food into the list for search in db
 

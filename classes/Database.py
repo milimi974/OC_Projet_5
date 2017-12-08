@@ -52,12 +52,14 @@ class Database(object):
         if not DB.is_connected:
             print('Error connected')
             return False
+        # Remove primary key
         if 'PK_id' in fields:
             fields.remove('PK_id')
+        # Prepare request
         prepare = ['%s' for n in fields]
         req = ('INSERT INTO {} ({}) VALUES ({})'.format(tablename, ','.join(fields), ','.join(prepare)))
 
-
+        # Format values for prepared request
         if type(data) == list:
             q = []
             for d in data:
@@ -66,15 +68,18 @@ class Database(object):
                 for field in fields:
                     p.append(args[field])
                 q.append(tuple(p))
-
+            # Bulk insert data
             query.executemany(req,q)
         else:
             p = []
+            args = data.__dict__
             for field in fields:
-                p.append(data[field])
+                p.append(args[field])
+            # Unique insert data
             query.execute(req, tuple(p))
-
+        # Send request to database
         DB.cnx.commit()
+        # Close query
         query.close()
 
     @staticmethod
@@ -86,11 +91,51 @@ class Database(object):
         data -- object or [object] to update
 
         """
+
         DB = Database()
+        query = DB.cursor
         # if doesn't connected to db break
         if not DB.is_connected:
             print('Error connected')
             return False
+        # Remove primary key
+        if 'PK_id' in fields:
+            fields.remove('PK_id')
+
+        # Format values for prepared request
+        if type(data) == list:
+            for d in data:
+                args = d.__dict__
+                p = []
+                for field in fields:
+                    p.append(args[field])
+                if 'PK_id' in args and int(args['PK_id']) > 0:
+                    cond = 'PK_id = ' + str(args['PK_id'])
+                    req = Database.__up(tablename,fields,cond)
+                    query.execute(req, tuple(p))
+            return
+        else:
+            p = []
+            args = data.__dict__
+            for field in fields:
+                p.append(args[field])
+
+            if 'PK_id' in args and int(args['PK_id']) > 0:
+                cond = 'PK_id = ' + str(args['PK_id'])
+                req = Database.__up(tablename, fields, cond)
+                # Unique insert data
+                query.execute(req, tuple(p))
+        # Send request to database
+        DB.cnx.commit()
+        # Close query
+        query.close()
+
+    @staticmethod
+    def __up(tablename, fields, cond):
+        # Prepare request
+        prepare = [n + ' = %s' for n in fields]
+        return ('UPDATE {} SET {} WHERE {}'.format(tablename, ','.join(prepare), cond))
+
 
     @staticmethod
     def select(tablename, conditions):
