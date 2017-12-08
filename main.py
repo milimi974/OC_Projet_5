@@ -3,7 +3,6 @@
 
 # load dependences
 # Import classes packages
-from classes.Database import Database as DB
 from classes.User import User
 from classes.Food import Food
 
@@ -17,31 +16,51 @@ class Main:
     # Class attributes
     config = {
         'max_entries': 50,
-        'csv_uri': 'http://world.openfoodfacts.org/data/en.openfoodfacts.org.products.csv'
+        'csv_uri': 'http://world.openfoodfacts.org/data/fr.openfoodfacts.org.products.csv'
     }
 
     def __init__(self):
         """ Constructor initialize module """
 
-        # Create Database module
-        self.db = DB()
 
+
+    @property
     def update_db(self):
-        """ Public methode for updating database from csv"""
+        """ Public property for updating database from csv"""
 
         # vars
         new_food = []
         update_food = []
+        csv_foods = []
 
         # Read Csv file from url
         with open('./uploads/food.csv', newline='', encoding='utf-8') as csvfile:
-
+            # Associating header with value in a dictionary
             reader = csv.DictReader(csvfile, delimiter='\t')
+            # Start loop to read each line
+
+            max = self.config['max_entries']
+
             for row in reader:
+                # Arguments for instanciate Food
+                args = {
+                    'PK_id': 0,
+                    'code': row['code'],
+                    'link': row['url'],
+                    'name': row['product_name'],
+                    'description': row['ingredients_text'],
+                    'level': row['nutrition_grade_fr'],
+                    'created': row['created_t'],
+                    'modified': row['last_modified_t'],
+                    'shops': row['stores'],
+                    'categories': row['categories_fr'],
+                }
 
-                pass
-
-        # Start loop to read each line
+                csv_foods.append(Food(args))
+                # If max data to execute
+                # Save or update
+                if(len(csv_foods) >= max):
+                    pass
 
         # Create a list a food object for each line
 
@@ -77,9 +96,10 @@ class Main:
     def run(self):
         """ public methode start application"""
 
-        self.update_db()
+        self.update_db
         print("That Run")
 
 
 main = Main()
-main.run
+# main.run
+print(main.__dict__)
