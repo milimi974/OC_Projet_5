@@ -65,6 +65,8 @@ class Database(object):
             for d in data:
                 args = d.__dict__
                 p = []
+                # Extract form data only field configs for change
+                # and create new list in the right order
                 for field in fields:
                     p.append(args[field])
                 q.append(tuple(p))
@@ -105,52 +107,69 @@ class Database(object):
         # Format values for prepared request
         if type(data) == list:
             for d in data:
-                args = d.__dict__
-                p = []
-                for field in fields:
-                    p.append(args[field])
-                if 'PK_id' in args and int(args['PK_id']) > 0:
-                    cond = 'PK_id = ' + str(args['PK_id'])
-                    req = Database.__up(tablename,fields,cond)
-                    query.execute(req, tuple(p))
-            return
+                Database.__up(tablename, fields, d.__dict__)
         else:
-            p = []
-            args = data.__dict__
-            for field in fields:
-                p.append(args[field])
+            Database.__up(tablename, fields, data.__dict__)
 
-            if 'PK_id' in args and int(args['PK_id']) > 0:
-                cond = 'PK_id = ' + str(args['PK_id'])
-                req = Database.__up(tablename, fields, cond)
-                # Unique insert data
-                query.execute(req, tuple(p))
         # Send request to database
         DB.cnx.commit()
         # Close query
         query.close()
 
     @staticmethod
-    def __up(tablename, fields, cond):
-        # Prepare request
-        prepare = [n + ' = %s' for n in fields]
-        return ('UPDATE {} SET {} WHERE {}'.format(tablename, ','.join(prepare), cond))
-
-
-    @staticmethod
-    def select(tablename, conditions):
-        """ Method save data in database
+    def __up(tablename, fields, args):
+        """ Static Method update data
 
         Keyword arguments:
         tablename -- string name of table
+        fields -- list of fields name of table
+        args -- dict of fields an value to update
+
+        """
+        p = []
+        # Extract form data only field configs for change
+        for field in fields:
+            p.append(args[field])
+        # Create conditional on primary key
+        if 'PK_id' in args and int(args['PK_id']) > 0:
+            cond = 'PK_id = ' + str(args['PK_id'])
+
+        # Prepare request
+        prepare = [n + ' = %s' for n in fields]
+        req = tuple('UPDATE {} SET {} WHERE {}'.format(tablename, ','.join(prepare), cond))
+        query =(Database()).cursor
+        # Unique insert data
+        query.execute(req, tuple(p))
+
+    @staticmethod
+    def select(tablename, fields, conditions, one=False, others=[]):
+        """ Method return data form database
+
+        Keyword arguments:
+        tablename -- string name of table
+        fields -- database fields name for request or * for all
         conditions -- dict of conditions to apply on request
+        one -- boolean use for return only one answer
+        others -- dict of complements information request
 
         """
         DB = Database()
+        query = DB.cursor
+
         # if doesn't connected to db break
         if not DB.is_connected:
             print('Error connected')
             return False
+        # Format if fields selected
+        if not fields == '*':
+            fields = ','.join(fields)
+
+        req = 'SELECT {} FROM {} WHERE {} {}'.format(fields,tablename,conditions,others)
+
+        query.execute(req)
+        if one:
+            return query.fetchone()
+        return query.fetchall()
 
     @staticmethod
     def query(tablename, request):
@@ -162,10 +181,18 @@ class Database(object):
 
         """
         DB = (Database())
+        _query = DB.cursor
         # if doesn't connected to db break
         if not DB.is_connected:
             print('Error connected')
             return False
+        _query.execute(request)
+        rows = _query.fetchall()
+        insertID = _query.lastrowid
+        # Send request to database
+        DB.cnx.commit()
+        # Close query
+        _query.close()
 
     @property
     def __connect(self):
@@ -188,7 +215,7 @@ class Database(object):
 
     @property
     def cursor(self):
-        """ Return connection cursor """
+        """ Return connection cursor for execute request"""
         return self.db.cursor()
 
     @property

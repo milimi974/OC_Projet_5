@@ -133,8 +133,17 @@ class Main:
     def run(self):
         """ public methode start application"""
 
-        self.update_db
+        # self.update_db
         print("That Run")
+        args = {
+            'fields': 'all',
+            'where': [
+                ('name LIKE', '%a%'),
+            ],
+            'limit': [0,20],
+
+        }
+        (Food()).find(args)
 
 
 main = Main()
