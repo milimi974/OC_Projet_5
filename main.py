@@ -1,4 +1,4 @@
-#!/_env/bin/python3.5
+#!/_env/bin/python
 # coding: utf-8
 
 # load dependencies
@@ -68,14 +68,21 @@ class Main:
         foods -- list of food object
 
         """
+
+        # Get foods from db with food list name
+        names = []
+        for el in foods:
+            names.append(el.name)
+
+
         # save all data
-        (Food()).bulk(foods,True)
+        (Food()).bulk(foods)
 
         # Add name of food into the list for search in db
 
 
 
-        # Get foods from db with food list name
+
 
         # Compare Db_Food with Csv_Food
 
@@ -133,7 +140,8 @@ class Main:
     def run(self):
         """ public methode start application"""
 
-        # self.update_db
+        self.update_db
+
         print("That Run")
         args = {
             'fields': 'all',
@@ -143,7 +151,9 @@ class Main:
             'limit': [0,20],
 
         }
-        (Food()).find(args)
+        rep = (Food()).search_by(('name LIKE','%a%'))
+        print(rep)
+
 
 
 main = Main()

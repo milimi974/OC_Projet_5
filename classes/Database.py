@@ -1,5 +1,7 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python
 # coding: utf-8
+
+""" Module Parent for request to BDD """
 
 # import dependencies
 # Mysql packages
@@ -46,6 +48,7 @@ class Database(object):
         data -- object or [object] to save
 
         """
+
         DB = Database()
         query = DB.cursor
         # if doesn't connected to db break
@@ -57,7 +60,13 @@ class Database(object):
             fields.remove('PK_id')
         # Prepare request
         prepare = ['%s' for n in fields]
-        req = ('INSERT INTO {} ({}) VALUES ({})'.format(tablename, ','.join(fields), ','.join(prepare)))
+        req = ('INSERT INTO {} ({}) VALUES ({})'
+               .format(tablename,
+                       ','.join(fields),
+                       ','.join(prepare)))
+
+        # return object answer
+        response = False
 
         # Format values for prepared request
         if type(data) == list:
@@ -71,7 +80,8 @@ class Database(object):
                     p.append(args[field])
                 q.append(tuple(p))
             # Bulk insert data
-            query.executemany(req,q)
+            query.executemany(req, q)
+            response = True
         else:
             p = []
             args = data.__dict__
@@ -79,10 +89,14 @@ class Database(object):
                 p.append(args[field])
             # Unique insert data
             query.execute(req, tuple(p))
+            response = query.lastrowid
+
         # Send request to database
         DB.cnx.commit()
         # Close query
         query.close()
+
+        return response
 
     @staticmethod
     def update(tablename, fields, data):
@@ -107,17 +121,16 @@ class Database(object):
         # Format values for prepared request
         if type(data) == list:
             for d in data:
-                Database.__up(tablename, fields, d.__dict__)
+                DB.__up(tablename, fields, d.__dict__)
         else:
-            Database.__up(tablename, fields, data.__dict__)
+            DB.__up(tablename, fields, data.__dict__)
 
         # Send request to database
         DB.cnx.commit()
         # Close query
         query.close()
 
-    @staticmethod
-    def __up(tablename, fields, args):
+    def __up(self, tablename, fields, args):
         """ Static Method update data
 
         Keyword arguments:
@@ -134,12 +147,142 @@ class Database(object):
         if 'PK_id' in args and int(args['PK_id']) > 0:
             cond = 'PK_id = ' + str(args['PK_id'])
 
-        # Prepare request
-        prepare = [n + ' = %s' for n in fields]
-        req = tuple('UPDATE {} SET {} WHERE {}'.format(tablename, ','.join(prepare), cond))
-        query =(Database()).cursor
-        # Unique insert data
-        query.execute(req, tuple(p))
+            # Prepare request
+            prepare = [n + ' = %s' for n in fields]
+            req = tuple('UPDATE {} SET {} WHERE {}'.format(tablename, ','.join(prepare), cond))
+
+            query = Database().cursor
+            # Unique insert data
+            query.execute(req, tuple(p))
+
+    @staticmethod
+    def search(tablename, request, one, classname):
+        """ Method search data in bdd
+
+        Method arguments:
+        request : dict with actions and fields
+        {
+            'fields':'all or ['field',]',
+            'where': tuple ('field %cond%': %value% / [list of tuple] / (tuple) , ),
+            'order': ['field',], str || list
+            'group': ['field',],
+            'limit': [int,int],
+
+        }
+        %cond% -- =, >, <, >=, <=, IN, BETWEEN, LIKE,
+        %value%  -- IS NULL, IS NOT NULL
+
+        """
+
+        # Format fields
+        fields = '*'
+        if 'fields' in request:
+            if type(request['fields']) == str:
+                if not request['fields'] == 'all':
+                    fields = request['fields']
+            elif type(request['fields']) == list:
+                fields = ','.join(request['fields'])
+
+        # Format where
+        conditions = '1=1 '
+        if type(request['where']) == list:
+            for element in request['where']:
+                conditions += Database().__format_where(*element)
+
+        # Format orders
+        others = ''
+        if 'order' in request:
+            if type(request['order']) == list:
+                others += ' ORDER BY ' + ','.join(request['order'])
+            else:
+                others += ' ORDER BY ' + str(request['order'])
+
+        # Format group
+        if 'group' in request:
+            if type(request['group']) == list:
+                others += ' GROUP BY ' + ','.join(request['group'])
+            else:
+                others += ' GROUP BY ' + str(request['group'])
+
+        # Format Limit
+        if 'limit' in request:
+            if type(request['limit']) == list:
+                others += ' LIMIT ' + ','.join(str(e) for e in request['limit'])
+            else:
+                others += ' LIMIT ' + str(request['limit'])
+        # Request answer
+        response = Database().select(tablename, fields, conditions, one, others)
+
+        rep = []
+        # Format answer in class object
+        if type(response) == list:
+            for el in response:
+                rep.append(classname(el))
+        else:
+            rep = classname(response)
+        return rep
+
+    def __format_where(self, field, value):
+        """ Format element on where conditions
+
+        Method arguments:
+        field -- str name of field or condition AND || OR
+        value -- tuple || list
+
+        """
+
+        conditions = ''
+
+        if field == 'OR' or field == 'AND':
+            if type(value) == list:
+                link = 'AND'
+                d = []
+                for el in value:
+                    x, y = el
+                    if x == 'OR' or x == 'AND':
+                        link = x
+                        for el2 in y:
+                            a, b = el2
+                            d.append(self.__make_condition('', a, b))
+                    else:
+                        d.append(self.__make_condition('', x, y))
+
+                conditions += ' ' + field + ' (' + link.join(d) + ')'
+            else:
+                x, y = value
+                conditions += self.__make_condition(field, x, y)
+
+        else:
+            conditions += self.__make_condition('AND', field, value)
+
+        return conditions
+
+    def __make_condition(self, link, key, value):
+        """ Static method format one condition where"""
+
+        # extract condition on field
+        act = key.split()
+
+        # if no condition set add =
+        if len(act) == 1:
+            if type(value) == str:
+                if not value == 'IS NULL' and not value == 'IS NOT NULL':
+                    act.append('=')
+
+        # Action on special condition
+        if act[1] == 'IN':
+            if type(value) == list:
+                if type(value[0]) == str:
+                    value = '({})'.format(','.join(["'" + a + "'" for a in value]))
+                else:
+                    value = '({})'.format(','.join(value))
+        elif act[1] == 'BETWEEN':
+            value = '{} AND {}'.format(str(value[0]), str(value[1]))
+        elif act[1] == 'LIKE' or type(value) == str:
+            value = "'{}'".format(value)
+
+        # Return formated condition
+        return '{} {} {} {} '.format(link, act[0], act[1], str(value))
 
     @staticmethod
     def select(tablename, fields, conditions, one=False, others=[]):
@@ -153,8 +296,9 @@ class Database(object):
         others -- dict of complements information request
 
         """
+
         DB = Database()
-        query = DB.cursor
+        query = DB.cnx.cursor(dictionary=True)
 
         # if doesn't connected to db break
         if not DB.is_connected:
@@ -164,35 +308,43 @@ class Database(object):
         if not fields == '*':
             fields = ','.join(fields)
 
-        req = 'SELECT {} FROM {} WHERE {} {}'.format(fields,tablename,conditions,others)
-
+        req = 'SELECT {} FROM {} WHERE {} {}'\
+            .format(fields,
+                    tablename,
+                    conditions,
+                    others)
+        print(req)
         query.execute(req)
         if one:
             return query.fetchone()
         return query.fetchall()
 
     @staticmethod
-    def query(tablename, request):
+    def query(request):
         """ Method save data in database
 
         Keyword arguments:
-        tablename -- string name of table
         request -- string a sql request
 
         """
         DB = (Database())
-        _query = DB.cursor
+        _query = (DB.cnx).cursor(dictionary=True)
         # if doesn't connected to db break
         if not DB.is_connected:
             print('Error connected')
             return False
         _query.execute(request)
-        rows = _query.fetchall()
         insertID = _query.lastrowid
+        rows = _query.fetchall()
+
         # Send request to database
         DB.cnx.commit()
         # Close query
         _query.close()
+
+        if insertID:
+            return insertID
+        return rows
 
     @property
     def __connect(self):

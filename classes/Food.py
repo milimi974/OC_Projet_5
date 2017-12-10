@@ -9,6 +9,7 @@ from classes.Shop import Shop
 
 # Import Model parent
 from classes.Model import Model
+from classes.Functions import *
 
 
 class Food(Model):
@@ -19,6 +20,7 @@ class Food(Model):
     fields = [
         'PK_id',
         'code',
+        'uri',
         'link',
         'name',
         'description',
@@ -37,11 +39,14 @@ class Food(Model):
         # Instantiate Parent
         super().__init__(args)
 
-        # init attributes
-        if 'categories' in args:
-            self.categories = self.__make_categories(args['categories'])
-        if 'shops' in args:
-            self.shops = self.__make_shops(args['shops'])
+        if args:
+            self.uri = serialized_title(args['name'])
+
+            # init attributes
+            if 'categories' in args:
+                self.categories = self.__make_categories(args['categories'])
+            if 'shops' in args:
+                self.shops = self.__make_shops(args['shops'])
 
 
     def __make_categories(self,categories):
