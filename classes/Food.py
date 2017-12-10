@@ -17,6 +17,7 @@ class Food(Model):
 
     # Database table name
     table = 'Foods'
+    # Table column names
     fields = [
         'PK_id',
         'code',
@@ -42,7 +43,7 @@ class Food(Model):
         if args:
             if int(self.PK_id) > 0:
                 self.categories = (Category()).get_categories(self.PK_id)
-                #self.shops = (Shop()).get_shops(self.PK_id)
+                self.shops = (Shop()).get_shops(self.PK_id)
             else:
                 self.uri = serialized_title(args['name'])
 
@@ -89,6 +90,34 @@ class Food(Model):
             for shop in shops:
                 response.append(Shop(shop))
         return response
+
+    def bulk(self, data, update=False, names=[]):
+        """ Override parent method
+
+        Keyword arguments:
+        data -- list of product fields value
+        update -- boolean use active update action
+        names -- list contain uri foods name
+
+        """
+        print("Bulk child")
+        # Call parent method
+        Model.bulk(data, update)
+        if not update:
+            # Add foods
+            db_data = (Food()).search_by(('uri IN', names))
+            # List of categories ids created
+            cat_ids = []
+            cat_names = []
+            for cat in data.categories.items():
+                cat_names.append(cat.name)
+
+            if cat_names:
+                db_cat = (Category()).search_by(('name IN', names))
+
+        else:
+            # Update Foods
+            pass
 
     @property
     def _get_name(self):

@@ -3,7 +3,7 @@
 
 # Import Model parent
 from classes.Model import Model
-
+from classes.Functions import *
 
 class Shop(Model):
     """ Class associate table Shops """
@@ -14,12 +14,16 @@ class Shop(Model):
     # Fields name on db
     fields = [
         'PK_id',
-        'name'
+        'name',
+        'uri',
     ]
 
     def __init__(self, args={}):
         # Instantiate Parent
         super().__init__(args)
+
+        if 'name' in args:
+            self.uri = serialized_title(args['name'])
 
     def get_shops(self, ID):
         """ Method return all shops for one food

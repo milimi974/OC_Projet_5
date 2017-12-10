@@ -112,3 +112,28 @@ class Model(object):
             ]
         }
         return DB.search(self.table, request, False, self.__class__)
+
+    def get_ids(self, args):
+        """ Make a search on one field
+
+        Keyword arguments:
+        args -- tuple
+            (
+                field -- str name of database field
+                value -- str || list
+            )
+
+        """
+        request = {
+            'fields': 'PK_id',
+            'where': [
+                args,
+            ]
+        }
+        rep = DB.search(self.table, request, False, self.__class__)
+        ids = []
+        if rep:
+            for el in rep:
+                ids.append(el.PK_id)
+        return ids
+

@@ -77,7 +77,7 @@ class Main:
             names.append(serialized_title(el.name))
 
         db_data = (Food()).search_by(('uri IN', names))
-        print(db_data)
+
         # Compare Db_Food with Csv_Food
         add_list = []
         if db_data:
@@ -100,7 +100,8 @@ class Main:
             add_list = foods
 
         # save all new data
-        (Food()).bulk(add_list)
+        if add_list:
+            (Food()).bulk(add_list, False, names)
 
     @staticmethod
     def __compare(food, db_food):

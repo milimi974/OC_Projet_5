@@ -3,7 +3,7 @@
 
 # Import Model parent
 from classes.Model import Model
-
+from classes.Functions import *
 
 class Category(Model):
     """ Class associate to table categories """
@@ -14,12 +14,16 @@ class Category(Model):
     # Fields name on db
     fields = [
         'PK_id',
-        'name'
+        'name',
+        'uri',
     ]
 
     def __init__(self, args={}):
         # Instantiate Parent
         super().__init__(args)
+
+        if 'name' in args:
+            self.uri = serialized_title(args['name'])
 
     def get_categories(self, ID):
         """ Method return all categories for one food
