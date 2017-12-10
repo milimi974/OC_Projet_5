@@ -36,7 +36,6 @@ class Model(object):
 
     def save(self):
         """ Method save or update data do bdd """
-        print('Model save')
         if not self.__is_error:
 
             if hasattr(self, 'PK_id') and int(self.PK_id) > 0:
@@ -49,12 +48,35 @@ class Model(object):
                 DB.save(self.table, self.fields, self)
 
     def find(self, request):
-        """ Method search multi answer """
+        """ Method search multi answer
+
+        Keyword arguments:
+        request -- dict of instructions for database request
+        """
         return DB.search(self.table, request, False, self.__class__)
 
     def findone(self, request):
-        """ Method search one answer """
+        """ Method search one answer
+
+        Keyword arguments:
+        request -- dict of instructions for database request
+
+        """
         return DB.search(self.table, request, True, self.__class__)
+
+    def findjoin(self, table1, request, table2=None):
+        """ Method search join answer
+
+        Keyword arguments:
+        table1 -- str name of main table for JOIN
+        table2 -- str name join table
+        request -- dict of instructions for database request
+
+        """
+        if not table2:
+            table2 = self.table
+
+        return DB.search(table1, request, False, self.__class__, table2)
 
     def bulk(self, data, update=False):
         """ method for saving a bulk data

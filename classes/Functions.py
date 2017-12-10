@@ -8,5 +8,6 @@ import re
 
 def serialized_title(name):
     """ Format string with - """
-    a = unidecode.unidecode(str(name)).lower().replace(' ', '-')
+    a = re.sub(' +', ' ', str(name))
+    a = unidecode.unidecode(a).lower().replace(' ', '-')
     return re.sub('[^A-Za-z0-9 \-]+', '', a)

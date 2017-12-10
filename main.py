@@ -5,7 +5,7 @@
 # Import classes packages
 from classes.User import User
 from classes.Food import Food
-
+from classes.Functions import *
 
 # Import modules
 import csv  # Manage cvs file
@@ -18,7 +18,7 @@ class Main:
 
     # Class attributes
     config = {
-        'max_entries': 100,
+        'max_entries': 5,
         'csv_uri': 'http://world.openfoodfacts.org/data/fr.openfoodfacts.org.products.csv'
     }
 
@@ -52,6 +52,7 @@ class Main:
                 # Save or update
                 if len(csv_foods) >= max_req:
                     Main.__create_foods(csv_foods)
+                    # Rest food list
                     csv_foods = []
                     break
 
@@ -72,29 +73,43 @@ class Main:
         # Get foods from db with food list name
         names = []
         for el in foods:
-            names.append(el.name)
+            # Add name of food into the list for search in db
+            names.append(serialized_title(el.name))
 
-
-        # save all data
-        (Food()).bulk(foods)
-
-        # Add name of food into the list for search in db
-
-
-
-
-
+        db_data = (Food()).search_by(('uri IN', names))
+        print(db_data)
         # Compare Db_Food with Csv_Food
+        add_list = []
+        if db_data:
+            print('Data found')
+            for food in foods:
+                found = False
+                for db_food in db_data:
+                    if food.uri == db_food.uri:
+                        # If exist compare for update
+                        print('Exist')
+                        Main.__compare(food, db_food)
+                        found = True
+                        break
+                # If new add to list for save
+                if not found:
+                    print('Create')
+                    add_list.append(food)
+        else:
+            print('No data found')
+            add_list = foods
 
-        # If new add to list for save
+        # save all new data
+        (Food()).bulk(add_list)
 
-        # If update add to list for update
-
-        # Add new Foods
-
-        # Update Foods
-
-        # Reset max line to read
+    @staticmethod
+    def __compare(food, db_food):
+        """ Methode compare 2 food object """
+        if not str(food.modified) == str(db_food.modified):
+            print("{} : {} -- {}".format("Modified", food.modified, db_food.modified))
+            food.PK_id = db_food.PK_id
+            food.save()
+            print('Update ' + food.name)
 
     @staticmethod
     def __make_food(row):
@@ -143,6 +158,7 @@ class Main:
         self.update_db
 
         print("That Run")
+        """
         args = {
             'fields': 'all',
             'where': [
@@ -153,7 +169,7 @@ class Main:
         }
         rep = (Food()).search_by(('name LIKE','%a%'))
         print(rep)
-
+        """
 
 
 main = Main()

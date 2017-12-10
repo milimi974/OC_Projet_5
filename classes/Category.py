@@ -21,5 +21,20 @@ class Category(Model):
         # Instantiate Parent
         super().__init__(args)
 
+    def get_categories(self, ID):
+        """ Method return all categories for one food
 
+        Keyword arguments:
+        ID -- int food ID
+
+        """
+        args = {
+            'where': [
+                ('Food_has_Categories.FK_food_id =',int(ID))
+            ],
+            'on': [
+                ('Categories.PK_id =', 'Food_has_Categories.FK_categorie_id'),
+            ]
+        }
+        return self.findjoin('Food_has_Categories',args)
 

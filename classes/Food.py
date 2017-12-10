@@ -40,14 +40,17 @@ class Food(Model):
         super().__init__(args)
 
         if args:
-            self.uri = serialized_title(args['name'])
+            if int(self.PK_id) > 0:
+                self.categories = (Category()).get_categories(self.PK_id)
+                #self.shops = (Shop()).get_shops(self.PK_id)
+            else:
+                self.uri = serialized_title(args['name'])
 
-            # init attributes
-            if 'categories' in args:
-                self.categories = self.__make_categories(args['categories'])
-            if 'shops' in args:
-                self.shops = self.__make_shops(args['shops'])
-
+                # init attributes
+                if 'categories' in args:
+                    self.categories = self.__make_categories(args['categories'])
+                if 'shops' in args:
+                    self.shops = self.__make_shops(args['shops'])
 
     def __make_categories(self,categories):
         """ create a new category object then add to attribute list
@@ -68,7 +71,6 @@ class Food(Model):
                 if 'en:' not in category and 'pl:' not in category:
                     response.append(Category(category))
         return response
-
 
     def __make_shops(self,shops):
         """ create a new shop object then add to attribute list

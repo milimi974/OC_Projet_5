@@ -20,3 +20,20 @@ class Shop(Model):
     def __init__(self, args={}):
         # Instantiate Parent
         super().__init__(args)
+
+    def get_shops(self, ID):
+        """ Method return all shops for one food
+
+        Keyword arguments:
+        ID -- int food ID
+
+        """
+        args = {
+            'where': [
+                ('Food_has_Shops.FK_food_id =', int(ID))
+            ],
+            'on': [
+                ('Shops.PK_id =', 'Food_has_Shops.FK_shop_id'),
+            ]
+        }
+        return self.findjoin('Food_has_Shops', args)

@@ -149,14 +149,14 @@ class Database(object):
 
             # Prepare request
             prepare = [n + ' = %s' for n in fields]
-            req = tuple('UPDATE {} SET {} WHERE {}'.format(tablename, ','.join(prepare), cond))
+            req = ('UPDATE {} SET {} WHERE {}'.format(tablename, ','.join(prepare), cond))
 
             query = Database().cursor
             # Unique insert data
-            query.execute(req, tuple(p))
+            query.execute(req, p)
 
     @staticmethod
-    def search(tablename, request, one, classname):
+    def search(tablename, request, one, classname, jointable=''):
         """ Method search data in bdd
 
         Method arguments:
@@ -185,9 +185,19 @@ class Database(object):
 
         # Format where
         conditions = '1=1 '
-        if type(request['where']) == list:
+        if 'where' in request and type(request['where']) == list:
             for element in request['where']:
                 conditions += Database().__format_where(*element)
+
+        # Format join
+        joins = ''
+        if 'on' in request and type(request['on']) == list:
+            req = ''
+            for element in request['on']:
+                field, value = element
+                req += Database().__format_where(field, value, True)
+            req = req[3:]
+            joins = ' LEFT JOIN {} ON {} '.format(jointable, req)
 
         # Format orders
         others = ''
@@ -211,7 +221,7 @@ class Database(object):
             else:
                 others += ' LIMIT ' + str(request['limit'])
         # Request answer
-        response = Database().select(tablename, fields, conditions, one, others)
+        response = Database().select(tablename, fields, conditions, one, others, joins)
 
         rep = []
         # Format answer in class object
@@ -222,7 +232,7 @@ class Database(object):
             rep = classname(response)
         return rep
 
-    def __format_where(self, field, value):
+    def __format_where(self, field, value, join=False):
         """ Format element on where conditions
 
         Method arguments:
@@ -243,21 +253,21 @@ class Database(object):
                         link = x
                         for el2 in y:
                             a, b = el2
-                            d.append(self.__make_condition('', a, b))
+                            d.append(self.__make_condition('', a, b, join))
                     else:
-                        d.append(self.__make_condition('', x, y))
+                        d.append(self.__make_condition('', x, y, join))
 
                 conditions += ' ' + field + ' (' + link.join(d) + ')'
             else:
                 x, y = value
-                conditions += self.__make_condition(field, x, y)
+                conditions += self.__make_condition(field, x, y, join)
 
         else:
-            conditions += self.__make_condition('AND', field, value)
+            conditions += self.__make_condition('AND', field, value, join)
 
         return conditions
 
-    def __make_condition(self, link, key, value):
+    def __make_condition(self, link, key, value, join):
         """ Static method format one condition where"""
 
         # extract condition on field
@@ -270,22 +280,27 @@ class Database(object):
                     act.append('=')
 
         # Action on special condition
-        if act[1] == 'IN':
-            if type(value) == list:
-                if type(value[0]) == str:
-                    value = '({})'.format(','.join(["'" + a + "'" for a in value]))
-                else:
-                    value = '({})'.format(','.join(value))
-        elif act[1] == 'BETWEEN':
-            value = '{} AND {}'.format(str(value[0]), str(value[1]))
-        elif act[1] == 'LIKE' or type(value) == str:
-            value = "'{}'".format(value)
+        if len(act) >= 2:
+            if act[1] == 'IN':
+                if type(value) == list:
+                    if type(value[0]) == str:
+                        value = '({})'.format(','.join(["'" + a + "'" for a in value]))
+                    else:
+                        value = '({})'.format(','.join(value))
+            elif act[1] == 'BETWEEN':
+                value = '{} AND {}'.format(str(value[0]), str(value[1]))
+            elif act[1] == 'LIKE':
+                value = "'{}'".format(value)
 
-        # Return formated condition
-        return '{} {} {} {} '.format(link, act[0], act[1], str(value))
+            # Return formated condition
+            if type(value) == str and not join:
+                value = str(value)
+
+            return '{} {} {} {} '.format(link, act[0], act[1], value)
+        return ''
 
     @staticmethod
-    def select(tablename, fields, conditions, one=False, others=[]):
+    def select(tablename, fields, conditions, one=False, others=[], joins=''):
         """ Method return data form database
 
         Keyword arguments:
@@ -308,12 +323,13 @@ class Database(object):
         if not fields == '*':
             fields = ','.join(fields)
 
-        req = 'SELECT {} FROM {} WHERE {} {}'\
+        req = 'SELECT {} FROM {} {} WHERE {} {}'\
             .format(fields,
                     tablename,
+                    joins,
                     conditions,
                     others)
-        print(req)
+
         query.execute(req)
         if one:
             return query.fetchone()
