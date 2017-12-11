@@ -18,7 +18,7 @@ class Main:
 
     # Class attributes
     config = {
-        'max_entries': 5,
+        'max_entries': 100,
         'csv_uri': 'http://world.openfoodfacts.org/data/fr.openfoodfacts.org.products.csv'
     }
 
@@ -54,7 +54,6 @@ class Main:
                     Main.__create_foods(csv_foods)
                     # Rest food list
                     csv_foods = []
-                    break
 
             # Create last data
             print('------- Last Save -----')
@@ -101,7 +100,7 @@ class Main:
 
         # save all new data
         if add_list:
-            (Food()).bulk(add_list, False, names)
+            (Food()).bulk(add_list, False)
 
     @staticmethod
     def __compare(food, db_food):
@@ -133,13 +132,13 @@ class Main:
             'PK_id': 0,
             'code': row['code'],
             'link': row['url'],
-            'name': row['product_name'],
-            'description': row['ingredients_text'],
+            'name': serialized_title(row['product_name']),
+            'description': clear_texte(row['ingredients_text']),
             'level': row['nutrition_grade_fr'],
             'created': created,
             'modified': updated,
-            'shops': row['stores'],
-            'categories': row['categories_fr'],
+            'shops': clear_texte(row['stores']),
+            'categories': clear_texte(row['categories_fr']),
         }
         return Food(args)
 

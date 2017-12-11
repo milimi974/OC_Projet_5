@@ -42,3 +42,7 @@ class Category(Model):
         }
         return self.findjoin('Food_has_Categories',args)
 
+    @property
+    def _get_name(self):
+        """ property return object attribute name"""
+        return self.name

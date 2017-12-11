@@ -6,7 +6,7 @@
 # import dependencies
 # Mysql packages
 import mysql.connector
-
+from mysql.connector import Error
 
 class Database(object):
     """ That class connect and manage connection to database
@@ -50,11 +50,12 @@ class Database(object):
         """
 
         DB = Database()
-        query = DB.cursor
+
         # if doesn't connected to db break
         if not DB.is_connected:
             print('Error connected')
             return False
+        query = DB.cursor
         # Remove primary key
         if 'PK_id' in fields:
             fields.remove('PK_id')
@@ -80,16 +81,28 @@ class Database(object):
                     p.append(args[field])
                 q.append(tuple(p))
             # Bulk insert data
-            query.executemany(req, q)
-            response = True
+            try:
+                query.executemany(req, q)
+                response = True
+            except Error as e:
+                print(e)
+                print(req)
+                print(q)
+
         else:
             p = []
             args = data.__dict__
             for field in fields:
                 p.append(args[field])
             # Unique insert data
-            query.execute(req, tuple(p))
-            response = query.lastrowid
+            try:
+                query.execute(req, tuple(p))
+                response = query.lastrowid
+            except Error as e:
+                print(e)
+                print(req)
+                print(p)
+
 
         # Send request to database
         DB.cnx.commit()
@@ -153,7 +166,15 @@ class Database(object):
 
             query = Database().cursor
             # Unique insert data
-            query.execute(req, p)
+            try:
+                query.execute(req, p)
+            except:
+                print(req)
+                print(p)
+
+            Database().cnx.commit()
+            # Close query
+            query.close()
 
     @staticmethod
     def search(tablename, request, one, classname, jointable=''):
@@ -230,6 +251,7 @@ class Database(object):
                 rep.append(classname(el))
         else:
             rep = classname(response)
+
         return rep
 
     def __format_where(self, field, value, join=False):
@@ -267,7 +289,7 @@ class Database(object):
 
         return conditions
 
-    def __make_condition(self, link, key, value, join):
+    def __make_condition(self, link, key, value, join=False):
         """ Static method format one condition where"""
 
         # extract condition on field
@@ -291,10 +313,9 @@ class Database(object):
                 value = '{} AND {}'.format(str(value[0]), str(value[1]))
             elif act[1] == 'LIKE':
                 value = "'{}'".format(value)
-
-            # Return formated condition
-            if type(value) == str and not join:
-                value = str(value)
+            elif type(value) == str and not join:
+                # Return formated condition
+                value = "'{}'".format(value)
 
             return '{} {} {} {} '.format(link, act[0], act[1], value)
         return ''
@@ -313,14 +334,14 @@ class Database(object):
         """
 
         DB = Database()
-        query = DB.cnx.cursor(dictionary=True)
 
         # if doesn't connected to db break
         if not DB.is_connected:
             print('Error connected')
             return False
+        query = DB.cnx.cursor(dictionary=True,buffered=True)
         # Format if fields selected
-        if not fields == '*':
+        if not fields == '*' and type(fields) == list:
             fields = ','.join(fields)
 
         req = 'SELECT {} FROM {} {} WHERE {} {}'\
@@ -329,11 +350,21 @@ class Database(object):
                     joins,
                     conditions,
                     others)
+        try:
+            query.execute(req)
+        except:
+            print(req)
+        rep = []
+        if query.rowcount > 0:
+            if one:
+                rep = query.fetchone()
+            else:
+                rep = query.fetchall()
 
-        query.execute(req)
-        if one:
-            return query.fetchone()
-        return query.fetchall()
+        Database().cnx.commit()
+        # Close query
+        query.close()
+        return rep
 
     @staticmethod
     def query(request):
@@ -344,14 +375,17 @@ class Database(object):
 
         """
         DB = (Database())
-        _query = (DB.cnx).cursor(dictionary=True)
         # if doesn't connected to db break
         if not DB.is_connected:
             print('Error connected')
             return False
+        _query = (DB.cnx).cursor(dictionary=True,buffered=True)
         _query.execute(request)
         insertID = _query.lastrowid
-        rows = _query.fetchall()
+        rows = []
+        if _query.rowcount > 0:
+            rows = _query.fetchall()
+
 
         # Send request to database
         DB.cnx.commit()
@@ -384,7 +418,8 @@ class Database(object):
     @property
     def cursor(self):
         """ Return connection cursor for execute request"""
-        return self.db.cursor()
+        if self.is_connected:
+            return self.db.cursor()
 
     @property
     def cnx(self):

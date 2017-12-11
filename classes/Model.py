@@ -19,8 +19,9 @@ class Model(object):
         """
 
         # init attributes
-        self.PK_id = None
+        setattr(self, 'PK_id', 0)
         if hasattr(self, 'fields') and not self.fields == "" and args:
+
             for field in self.fields:
                 if field in args:
                     setattr(self, field, args[field])
@@ -37,23 +38,27 @@ class Model(object):
     def save(self):
         """ Method save or update data do bdd """
         if not self.__is_error:
-
+            fields = list(self.fields)
+            table = str(self.table)
             if hasattr(self, 'PK_id') and int(self.PK_id) > 0:
                 # Update data
-                DB.update(self.table, self.fields, self)
+                DB.update(table, fields, self)
             else:
                 # Save data
                 # if isset primary key id unset
                 self.PK_id = None
-                DB.save(self.table, self.fields, self)
+                DB.save(table, fields, self)
 
     def find(self, request):
         """ Method search multi answer
 
         Keyword arguments:
         request -- dict of instructions for database request
+
         """
-        return DB.search(self.table, request, False, self.__class__)
+
+        table = str(self.table)
+        return DB.search(table, request, False, self.__class__)
 
     def findone(self, request):
         """ Method search one answer
@@ -62,7 +67,9 @@ class Model(object):
         request -- dict of instructions for database request
 
         """
-        return DB.search(self.table, request, True, self.__class__)
+
+        table = str(self.table)
+        return DB.search(table, request, True, self.__class__)
 
     def findjoin(self, table1, request, table2=None):
         """ Method search join answer
@@ -78,21 +85,29 @@ class Model(object):
 
         return DB.search(table1, request, False, self.__class__, table2)
 
-    def bulk(self, data, update=False):
+    def bulk(self, data, update=False, tablename=None, fields=None):
         """ method for saving a bulk data
 
         Keyword arguments:
         data -- list of product fields value
         update -- boolean use active update action
-
+        -- for join table --
+        tablename -- string custom table
+        fields -- custom fields
         """
+        if not tablename:
+            tablename = str(self.table)
+
+        if not fields:
+            fields = list(self.fields)
 
         if not update:
             # Call method for save data
-            DB.save(self.table, self.fields, data)
+            DB.save(tablename, fields, data)
         else:
             # Call method for update data
-            DB.update(self.table, self.fields, data)
+            DB.update(tablename, fields, data)
+
 
     def search_by(self, args):
         """ Make a search on one field
@@ -111,9 +126,10 @@ class Model(object):
                 args,
             ]
         }
-        return DB.search(self.table, request, False, self.__class__)
+        table = str(self.table)
+        return DB.search(table, request, False, self.__class__)
 
-    def get_ids(self, args):
+    def search_ids(self, args):
         """ Make a search on one field
 
         Keyword arguments:
@@ -130,10 +146,49 @@ class Model(object):
                 args,
             ]
         }
-        rep = DB.search(self.table, request, False, self.__class__)
+        table = str(self.table)
+        rep = DB.search(table, request, False, self.__class__)
         ids = []
         if rep:
             for el in rep:
                 ids.append(el.PK_id)
         return ids
 
+    def search_id(self, args):
+        """ Make a search on one field then return PK_id
+
+        Keyword arguments:
+        args -- tuple
+            (
+                field -- str name of database field
+                value -- str || list
+            )
+
+        """
+        request = {
+            'fields': 'PK_id',
+            'where': [
+                args,
+            ]
+        }
+        table = str(self.table)
+        rep = DB.search(table, request, True, self.__class__)
+
+        if rep:
+            return rep.PK_id
+        return False
+
+    def get_list(self, fields, request):
+        """ Return a dict with key:value
+
+        Keyword arguments:
+        fields -- tuple for dict key value
+        request -- tuple search request conditions
+        """
+        query = self.search_by(request)
+
+        rep = []
+        key, value = fields
+        for el in query:
+            rep.append((el.__getattribute__(key),el.__getattribute__(value)))
+        return rep
