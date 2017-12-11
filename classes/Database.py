@@ -398,6 +398,45 @@ class Database(object):
             return insertID
         return rows
 
+    @staticmethod
+    def delete(tablename, request):
+        """ Method return data form database
+
+        Keyword arguments:
+        tablename -- string name of table
+        request -- dict of conditions to apply on request
+
+        """
+
+        DB = Database()
+
+        # if doesn't connected to db break
+        if not DB.is_connected:
+            print('Error connected')
+            return False
+
+        query = DB.cnx.cursor(dictionary=True, buffered=True)
+
+        # Format where
+        conditions = ''
+        if 'where' in request and type(request['where']) == list:
+            for element in request['where']:
+                conditions += Database().__format_where(*element)
+            # Remove AND in condition
+            conditions = conditions[3:]
+
+        req = 'DELETE FROM {} WHERE {}' \
+            .format(tablename,
+                    conditions)
+        try:
+            query.execute(req)
+        except:
+            print(req)
+
+        Database().cnx.commit()
+        # Close query
+        query.close()
+
     @property
     def __connect(self):
         """ Property connect instance to Database """

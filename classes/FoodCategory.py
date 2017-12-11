@@ -76,3 +76,6 @@ class FoodCategory(Model):
             # Add foods categories
             if len(food_has_cat) > 0:
                 cls.bulk(food_has_cat)
+
+    def remove(self):
+        """ Remove entry on database """

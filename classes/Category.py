@@ -44,7 +44,7 @@ class Category(Model):
         return self.findjoin('Food_has_Categories',args)
 
     @classmethod
-    def __make_categories(cls, categories):
+    def make_categories(cls, categories):
         """ Return a list of categories object
 
         Keyword arguments:

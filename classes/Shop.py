@@ -49,7 +49,7 @@ class Shop(Model):
         return self.name
     
     @classmethod
-    def __make_shops(cls,shops):
+    def make_shops(cls,shops):
         """ create a new shop object then add to attribute list
 
         Keyword arguments:

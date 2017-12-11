@@ -53,9 +53,9 @@ class Food(Model):
 
                 # init attributes
                 if 'categories' in args:
-                    self.categories = Category.__make_categories(args['categories'])
+                    self.categories = Category.make_categories(args['categories'])
                 if 'shops' in args:
-                    self.shops = Shop.__make_shops(args['shops'])
+                    self.shops = Shop.make_shops(args['shops'])
 
 
     def bulk(self, data, update=False):
@@ -116,7 +116,11 @@ class Food(Model):
 
             # If have category in list after check remove from db
             if len(db_categories) > 0:
-                pass
+                for category in db_categories:
+                    FoodCategory(FoodCategory(
+                        {'FK_food_id': db_food.PK_id,
+                         'FK_categorie_id': category.PK_id})
+                    ).remove()
         else:
             # create categories
             pass

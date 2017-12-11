@@ -192,3 +192,8 @@ class Model(object):
         for el in query:
             rep.append((el.__getattribute__(key),el.__getattribute__(value)))
         return rep
+
+    def delete(self, request):
+        """ delete element from data base """
+        table = str(self.table)
+        DB.delete(table, request)
