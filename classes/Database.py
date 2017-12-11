@@ -184,7 +184,7 @@ class Database(object):
         request : dict with actions and fields
         {
             'fields':'all or ['field',]',
-            'where': tuple ('field %cond%': %value% / [list of tuple] / (tuple) , ),
+            'where': [tuple ('field %cond%': %value% / [list of tuple] / (tuple) , )],
             'order': ['field',], str || list
             'group': ['field',],
             'limit': [int,int],
@@ -241,6 +241,7 @@ class Database(object):
                 others += ' LIMIT ' + ','.join(str(e) for e in request['limit'])
             else:
                 others += ' LIMIT ' + str(request['limit'])
+
         # Request answer
         response = Database().select(tablename, fields, conditions, one, others, joins)
 
@@ -354,6 +355,7 @@ class Database(object):
             query.execute(req)
         except:
             print(req)
+
         rep = []
         if query.rowcount > 0:
             if one:

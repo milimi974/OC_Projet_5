@@ -5,6 +5,8 @@
 # Import classes packages
 from classes.Category import Category
 from classes.Shop import Shop
+from classes.FoodCategory import FoodCategory
+from classes.FoodShop import FoodShop
 
 
 # Import Model parent
@@ -51,54 +53,16 @@ class Food(Model):
 
                 # init attributes
                 if 'categories' in args:
-                    self.categories = self.__make_categories(args['categories'])
+                    self.categories = Category.__make_categories(args['categories'])
                 if 'shops' in args:
-                    self.shops = self.__make_shops(args['shops'])
+                    self.shops = Shop.__make_shops(args['shops'])
 
-    def __make_categories(self,categories):
-        """ create a new category object then add to attribute list
-
-        Keyword arguments:
-        categories -- string of product categories
-
-        """
-
-        # responses var
-        response = []
-        # test type of value if string
-        if type(categories) is str and categories:
-            # Make a list with string
-            categories = categories.split(',')
-            # for each category remove term en and pl
-            for category in categories:
-                if 'en:' not in category and 'pl:' not in category:
-                    response.append(Category({'name': category}))
-
-        return response
-
-    def __make_shops(self,shops):
-        """ create a new shop object then add to attribute list
-
-        Keyword arguments:
-        shops -- string of product stores
-
-        """
-
-        # responses var
-        response = []
-        # test type of value if string
-        if type(shops) is str and shops:
-            # Make a list with string
-            shops = shops.split(',')
-            for shop in shops:
-                response.append(Shop({'name': shop}))
-        return response
 
     def bulk(self, data, update=False):
         """ Override parent method
 
         Keyword arguments:
-        data -- list of product fields value
+        data -- list of product from csv
         update -- boolean use active update action
         names -- list contain uri foods name
 
@@ -106,6 +70,7 @@ class Food(Model):
         print("Bulk child")
         # Call parent method
         Model.bulk(self,data, update)
+
         if not update:
             # List of food categories to create
             food_has_cat = []
@@ -115,108 +80,69 @@ class Food(Model):
 
             # Loop for each food data
             for food in data:
+                # Get Id of food created
+                food_id = (Food()).search_id(('code =', food.code))
+
                 # List of food categories to create
-                food_has_cat = self.__make_food_category(food)
+                FoodCategory.make_food_category(food, food_id)
 
                 # List of food Shops to create
-                food_has_shop = self.__make_food_shop(food)
+                FoodShop.make_food_shop(food, food_id)
 
-            # Add foods categories
-            if len(food_has_cat) > 0:
-                Model.bulk(self,food_has_cat, False, 'Food_has_Categories',['FK_food_id', 'FK_categorie_id'])
-
-            # Add foods shops
-            if len(food_has_shop) > 0:
-                Model.bulk(self, food_has_shop, False, 'Food_has_Shops', ['FK_food_id', 'FK_shop_id'])
         else:
             # Update Foods
             pass
 
-    def __make_food_category(self, food):
+    def update_categories(self, db_food):
+        """ Update food categories
 
-        food_has_cat = []
-        # Get Categories names
-        if len(food.categories) > 0:
-            cat_names = []
-            for cat in food.categories:
-                cat_names.append(cat.name)
+        Keyword arguments:
+        db_food -- Food data from database
 
-            categories = list(food.categories)
+        """
 
-            # check already exist
-            if len(cat_names) > 0:
-                food_id = (Food()).search_id(('uri =', food.uri))
+        # var contains new categories id
+        add_categories_id = []
+        # list of categories uri
+        db_categories = list(db_food.get_categories_uri)
 
-                db_cat = (Category()).get_list(('name', 'PK_id'), ('name IN', cat_names))
+        if len(self.categories) > 0:
+            for category in self.categories:
+                # if category isn't in db_categories create
+                if category.uri not in db_categories:
+                    add_categories_id.append(category.save())
+                else:
+                    db_categories.remove(category.uri)
 
-                if len(db_cat) > 0:
-                    for cat in db_cat:
-                        name, id = cat
-                        if name in cat_names:
-                            obj = type('fhc', (object,), {})()
-                            setattr(obj, 'FK_food_id', food_id)
-                            setattr(obj, 'FK_categorie_id', id)
-                            food_has_cat.append(obj)
-                            cat_names.remove(name)
-                            for category in categories:
-                                if category.name == name:
-                                    categories.remove(category)
+            # If have category in list after check remove from db
+            if len(db_categories) > 0:
+                pass
+        else:
+            # create categories
+            pass
 
-                # if have name to create
-                if len(cat_names) > 0:
-                    (Category()).bulk(categories)
-                    db_ids = (Category()).search_ids(('name IN', cat_names))
-                    for id in db_ids:
-                        obj = type('fhc', (object,), {})()
-                        setattr(obj, 'FK_food_id', food_id)
-                        setattr(obj, 'FK_categorie_id', id)
+    @property
+    def get_categories_uri(self):
+        """ extract categories name formated """
 
-                        food_has_cat.append(obj)
+        cat_names = []
+        if len(self.categories) > 0:
+            for cat in self.categories:
+                cat_names.append(cat.uri)
 
+        return cat_names
 
-        return food_has_cat
+    @property
+    def get_shops_uri(self):
+        """ extract shops name formated """
 
-    def __make_food_shop(self, food):
+        shop_names = []
+        if len(self.shops) > 0:
+            for shop in self.shops:
+                shop_names.append(shop.uri)
 
-        food_has_shop = []
-        # Get Shops names
-        if len(food.shops) > 0:
-            shop_names = []
-            for shop in food.shops:
-                shop_names.append(shop.name)
+        return shop_names
 
-            shops = list(food.shops)
-
-            # check already exist
-            if len(shop_names) > 0:
-                food_id = (Food()).search_id(('uri =', food.uri))
-
-                db_shop = (Shop()).get_list(('name', 'PK_id'), ('name IN', shop_names))
-
-                if len(db_shop) > 0:
-                    for shop in db_shop:
-                        name, id = shop
-                        if name in shop_names:
-                            obj = type('fhs', (object,), {})()
-                            setattr(obj, 'FK_food_id', food_id)
-                            setattr(obj, 'FK_shop_id', id)
-                            food_has_shop.append(obj)
-                            shop_names.remove(name)
-                            for sh in shops:
-                                if sh.name == name:
-                                    shops.remove(sh)
-
-                # if have name to create
-                if len(shop_names) > 0:
-                    (Shop()).bulk(shops)
-                    db_ids = (Shop()).search_ids(('name IN', shop_names))
-                    for id in db_ids:
-                        obj = type('fhs', (object,), {})()
-                        setattr(obj, 'FK_food_id', food_id)
-                        setattr(obj, 'FK_shop_id', id)
-                        food_has_shop.append(obj)
-
-        return food_has_shop
     @property
     def _get_name(self):
         """ property return object attribute name"""

@@ -18,7 +18,7 @@ class Main:
 
     # Class attributes
     config = {
-        'max_entries': 100,
+        'max_entries': 10,
         'csv_uri': 'http://world.openfoodfacts.org/data/fr.openfoodfacts.org.products.csv'
     }
 
@@ -54,6 +54,7 @@ class Main:
                     Main.__create_foods(csv_foods)
                     # Rest food list
                     csv_foods = []
+                    break
 
             # Create last data
             print('------- Last Save -----')
@@ -70,12 +71,12 @@ class Main:
         """
 
         # Get foods from db with food list name
-        names = []
+        codes = []
         for el in foods:
             # Add name of food into the list for search in db
-            names.append(serialized_title(el.name))
+            codes.append(serialized_title(el.code))
 
-        db_data = (Food()).search_by(('uri IN', names))
+        db_data = (Food()).search_by(('code IN', codes))
 
         # Compare Db_Food with Csv_Food
         add_list = []
@@ -84,7 +85,7 @@ class Main:
             for food in foods:
                 found = False
                 for db_food in db_data:
-                    if food.uri == db_food.uri:
+                    if food.code == db_food.code:
                         # If exist compare for update
                         print('Exist')
                         Main.__compare(food, db_food)
@@ -105,10 +106,17 @@ class Main:
     @staticmethod
     def __compare(food, db_food):
         """ Methode compare 2 food object """
+
+        # If modified date different update
         if not str(food.modified) == str(db_food.modified):
             print("{} : {} -- {}".format("Modified", food.modified, db_food.modified))
             food.PK_id = db_food.PK_id
+            # Update food
             food.save()
+            # Update food categories
+            food.update_categories(db_food)
+            # Update food shops
+            food.update_shops(db_food)
             print('Update ' + food.name)
 
     @staticmethod

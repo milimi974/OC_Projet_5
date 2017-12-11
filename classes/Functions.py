@@ -15,7 +15,7 @@ def serialized_title(name):
 
 def clear_title(name):
     """ Format string with - """
-    name = json.dumps(name)
+    name = re.sub('[\']', '\\\'', name)
     return re.sub(r'\W+', ' ', name)
 
 
