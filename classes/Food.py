@@ -31,6 +31,18 @@ class Food(Model):
         'created',
         'modified',
     ]
+    # Format fields
+    format_fields = {
+        'PK_id': 'primary',
+        'code': 'varchar',
+        'uri': 'serialized',
+        'link': 'url',
+        'name': 'text',
+        'description': 'text',
+        'level': 'varchar',
+        'created': 'datetime',
+        'modified': 'datetime',
+    }
 
     def __init__(self, args={}):
         """ Initialized Food object
@@ -43,19 +55,21 @@ class Food(Model):
         super().__init__(args)
 
         if args:
+            # If instantiate with data from database
             if self.PK_id and self.PK_id > 0:
+                # Get categories from db
                 self.categories = (Category()).get_categories(self.PK_id)
+                # Get shops from db
                 self.shops = (Shop()).get_shops(self.PK_id)
             else:
 
-                if 'name' in args:
-                    self.uri = serialized_title(args['name'])
-
                 # init attributes
                 if 'categories' in args:
-                    self.categories = Category.make_categories(args['categories'])
+                    # Grab categories form db
+                    self.categories = (Category()).make_categories(args['categories'])
                 if 'shops' in args:
-                    self.shops = Shop.make_shops(args['shops'])
+                    # Grab shops from db
+                    self.shops = (Shop()).make_shops(args['shops'])
 
 
     def bulk(self, data, update=False):
@@ -72,11 +86,7 @@ class Food(Model):
         Model.bulk(self,data, update)
 
         if not update:
-            # List of food categories to create
-            food_has_cat = []
-
-            # List of food Shops to create
-            food_has_shop = []
+            # after create food
 
             # Loop for each food data
             for food in data:
@@ -84,10 +94,10 @@ class Food(Model):
                 food_id = (Food()).search_id(('code =', food.code))
 
                 # List of food categories to create
-                FoodCategory.make_food_category(food, food_id)
+                (FoodCategory()).make_food_category(food, food_id)
 
                 # List of food Shops to create
-                FoodShop.make_food_shop(food, food_id)
+                (FoodShop()).make_food_shop(food, food_id)
 
         else:
             # Update Foods
@@ -107,6 +117,8 @@ class Food(Model):
         db_categories = list(db_food.get_categories_uri)
 
         if len(self.categories) > 0:
+
+            # if new category create and stack category to removed
             for category in self.categories:
                 # if category isn't in db_categories create
                 if category.uri not in db_categories:
@@ -119,11 +131,17 @@ class Food(Model):
                 for category in db_categories:
                     FoodCategory(FoodCategory(
                         {'FK_food_id': db_food.PK_id,
-                         'FK_categorie_id': category.PK_id})
+                         'FK_category_id': category.PK_id})
                     ).remove()
+
         else:
-            # create categories
-            pass
+            # If food no more have categories remove
+            if len(db_categories) > 0:
+                for category in db_categories:
+                    FoodCategory(FoodCategory(
+                        {'FK_food_id': db_food.PK_id,
+                         'FK_category_id': category.PK_id})
+                    ).remove()
 
     @property
     def get_categories_uri(self):

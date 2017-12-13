@@ -1,9 +1,12 @@
 #!/usr/bin/env python3.5
 # coding: utf-8
 
+# import dependencies
+from classes.Functions import *
+
 # Import Model parent
 from classes.Model import Model
-from classes.Functions import *
+
 
 class Category(Model):
     """ Class associate to table categories """
@@ -17,6 +20,13 @@ class Category(Model):
         'name',
         'uri',
     ]
+
+    # Format fields
+    format_fields = {
+        'PK_id': 'primary',
+        'uri': 'serialized',
+        'name': 'texte',
+    }
 
     def __init__(self, args={}):
 
@@ -38,13 +48,13 @@ class Category(Model):
                 ('Food_has_Categories.FK_food_id =',int(ID))
             ],
             'on': [
-                ('Categories.PK_id =', 'Food_has_Categories.FK_categorie_id'),
+                ('Categories.PK_id =', 'Food_has_Categories.FK_category_id'),
             ]
         }
         return self.findjoin('Food_has_Categories',args)
 
-    @classmethod
-    def make_categories(cls, categories):
+
+    def make_categories(self, categories):
         """ Return a list of categories object
 
         Keyword arguments:
@@ -68,30 +78,31 @@ class Category(Model):
             for category in categories:
                 if 'en:' not in category and 'pl:' not in category:
                     response.append(Category({'name': category}))
-                    categorie_uri.append(serialized_title(category))
+                    categorie_uri.append(category)
 
-            # get categories already exist
-            db_categories = cls.find({'where':[('uri IN', categorie_uri)]})
+            if len(categorie_uri) > 0:
+                # get categories already exist
+                db_categories = self.find({'where':[('uri IN', categorie_uri)]})
 
-            # var contains clone category uri
-            add_categories = list(categorie_uri)
+                # var contains clone category uri
+                add_categories = list(categorie_uri)
 
-            if len(db_categories) > 0:
-                for category in db_categories:
-                    if category.uri in categorie_uri:
-                        add_categories.remove(category.uri)
+                if len(db_categories) > 0:
+                    for category in db_categories:
+                        if category.uri in add_categories:
+                            add_categories.remove(category.uri)
 
-            # list of categories to create
-            if len(add_categories) > 0:
-                for category in response:
-                    if category.uri not in add_categories:
-                        response.remove(category)
+                # list of categories to create
+                if len(add_categories) > 0:
+                    for category in response:
+                        if category.uri not in add_categories:
+                            response.remove(category)
 
-                if len(response) > 0:
-                    cls.bulk(response)
-                    db_categories = cls.find({'where': [('uri IN', categorie_uri)]})
+                    if len(response) > 0:
+                        self.bulk(response)
+                        db_categories = self.find({'where': [('uri IN', categorie_uri)]})
 
-            response = db_categories
+                response = db_categories
         return response
 
     def remove_category(self):

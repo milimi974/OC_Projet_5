@@ -18,13 +18,15 @@ class Main:
 
     # Class attributes
     config = {
-        'max_entries': 10,
+        'max_entries': 250,
         'csv_uri': 'http://world.openfoodfacts.org/data/fr.openfoodfacts.org.products.csv'
     }
 
     def __init__(self):
         """ Constructor initialize module """
-
+        # percent update value
+        self.percent = 0.0
+        self.entry_count = 0
 
 
     @property
@@ -43,23 +45,28 @@ class Main:
 
             # Max line for one request
             max_req = self.config['max_entries']
-
+            self.entry_count = reader.line_num
+            percent = float(self.entry_count / max_req)
             # Start loop to read each line
             for row in reader:
                 # Create a list of food object for each line
-                csv_foods.append(Main.__make_food(row))
+                if row['product_name']:
+                    csv_foods.append(Main.__make_food(row))
                 # If reach max line to read
                 # Save or update
                 if len(csv_foods) >= max_req:
                     Main.__create_foods(csv_foods)
                     # Rest food list
                     csv_foods = []
-                    break
+                    self.percent += percent
+                    print("Mise à jour à {}%".format(self.percent))
+
 
             # Create last data
             print('------- Last Save -----')
             if len(csv_foods) > 0:
                 Main.__create_foods(csv_foods)
+            print("Mise à jour à 100%")
 
     @staticmethod
     def __create_foods(foods):
@@ -140,13 +147,14 @@ class Main:
             'PK_id': 0,
             'code': row['code'],
             'link': row['url'],
-            'name': serialized_title(row['product_name']),
-            'description': clear_texte(row['ingredients_text']),
+            'name': row['product_name'],
+            'uri': row['product_name'],
+            'description': row['ingredients_text'],
             'level': row['nutrition_grade_fr'],
             'created': created,
             'modified': updated,
-            'shops': clear_texte(row['stores']),
-            'categories': clear_texte(row['categories_fr']),
+            'shops': row['stores'],
+            'categories': row['categories_fr'],
         }
         return Food(args)
 

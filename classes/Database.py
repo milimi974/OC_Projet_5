@@ -4,6 +4,8 @@
 """ Module Parent for request to BDD """
 
 # import dependencies
+from classes.Functions import *
+
 # Mysql packages
 import mysql.connector
 from mysql.connector import Error
@@ -35,6 +37,7 @@ class Database(object):
             # Init db attribute
             Database.__instance.db = False
             Database.__instance.connected = False
+            Database.__instance.format_fields = []
             # Connect instance self.db to DB
             Database.__instance.__connect
         return Database.__instance
@@ -82,6 +85,7 @@ class Database(object):
                 q.append(tuple(p))
             # Bulk insert data
             try:
+
                 query.executemany(req, q)
                 response = True
             except Error as e:
@@ -155,7 +159,7 @@ class Database(object):
         p = []
         # Extract form data only field configs for change
         for field in fields:
-            p.append(args[field])
+            p.append(clear_texte(args[field]))
         # Create conditional on primary key
         if 'PK_id' in args and int(args['PK_id']) > 0:
             cond = 'PK_id = ' + str(args['PK_id'])
@@ -177,10 +181,15 @@ class Database(object):
             query.close()
 
     @staticmethod
-    def search(tablename, request, one, classname, jointable=''):
+    def search(format_fields, tablename, request, one, classname, jointable=''):
         """ Method search data in bdd
 
         Method arguments:
+        format_fields -- dict field format
+        tablename -- str name of table
+        one -- boolean True one response
+        classname -- obj for build response
+        jointable -- str name table for JOIN request
         request : dict with actions and fields
         {
             'fields':'all or ['field',]',
@@ -194,7 +203,8 @@ class Database(object):
         %value%  -- IS NULL, IS NOT NULL
 
         """
-
+        # set format field on object
+        Database().format_fields = format_fields
         # Format fields
         fields = '*'
         if 'fields' in request:
@@ -245,6 +255,7 @@ class Database(object):
         # Request answer
         response = Database().select(tablename, fields, conditions, one, others, joins)
 
+        response = Database().__decode_rep(response)
         rep = []
         # Format answer in class object
         if type(response) == list:
@@ -252,7 +263,23 @@ class Database(object):
                 rep.append(classname(el))
         else:
             rep = classname(response)
+        Database().format_fields = []
+        return rep
 
+    def __decode_rep(self, response):
+        """ decoding str from db """
+        rep = []
+        if len(self.format_fields) > 0:
+            if type(response) == list:
+                for el in response:
+                    x = {}
+                    for key, value in el.items():
+                        x[key] = decode_field(self.format_fields, key, value)
+                    rep.append(x)
+            else:
+                rep = {}
+                for key, value in response.items():
+                    rep[key] = decode_field(self.format_fields, key, value)
         return rep
 
     def __format_where(self, field, value, join=False):
@@ -307,19 +334,25 @@ class Database(object):
             if act[1] == 'IN':
                 if type(value) == list:
                     if type(value[0]) == str:
-                        value = '({})'.format(','.join(["'" + a + "'" for a in value]))
+                        value = '({})'.format(
+                            ','.join(["'" +
+                                      parse_field(self.format_fields, act[0], a) +
+                                      "'" for a in value]))
                     else:
                         value = '({})'.format(','.join(value))
             elif act[1] == 'BETWEEN':
-                value = '{} AND {}'.format(str(value[0]), str(value[1]))
+                value = '{} AND {}'.format(
+                    parse_field(self.format_fields, act[0], value[0]),
+                    parse_field(self.format_fields, act[0], value[1]))
             elif act[1] == 'LIKE':
-                value = "'{}'".format(value)
+                value = "'{}'".format(parse_field(self.format_fields, act[0], value))
             elif type(value) == str and not join:
                 # Return formated condition
-                value = "'{}'".format(value)
+                value = "'{}'".format(parse_field(self.format_fields, act[0], value))
 
             return '{} {} {} {} '.format(link, act[0], act[1], value)
         return ''
+
 
     @staticmethod
     def select(tablename, fields, conditions, one=False, others=[], joins=''):
@@ -340,7 +373,7 @@ class Database(object):
         if not DB.is_connected:
             print('Error connected')
             return False
-        query = DB.cnx.cursor(dictionary=True,buffered=True)
+        query = DB.cnx.cursor(dictionary=True, buffered=True)
         # Format if fields selected
         if not fields == '*' and type(fields) == list:
             fields = ','.join(fields)
@@ -381,13 +414,12 @@ class Database(object):
         if not DB.is_connected:
             print('Error connected')
             return False
-        _query = (DB.cnx).cursor(dictionary=True,buffered=True)
+        _query = (DB.cnx).cursor(dictionary=True, buffered=True)
         _query.execute(request)
         insertID = _query.lastrowid
         rows = []
         if _query.rowcount > 0:
             rows = _query.fetchall()
-
 
         # Send request to database
         DB.cnx.commit()
@@ -400,7 +432,7 @@ class Database(object):
 
     @staticmethod
     def delete(tablename, request):
-        """ Method return data form database
+        """ Method delete data form database
 
         Keyword arguments:
         tablename -- string name of table
@@ -436,6 +468,14 @@ class Database(object):
         Database().cnx.commit()
         # Close query
         query.close()
+
+    def _set_format_fields(self, value):
+        """ setters on format_fields attr """
+        self.format_fields = value
+
+    def _get_format_fields(self):
+        """ getters return format fields """
+        return self.format_fields
 
     @property
     def __connect(self):

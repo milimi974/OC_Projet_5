@@ -19,6 +19,13 @@ class Shop(Model):
         'uri',
     ]
 
+    # Format fields
+    format_fields = {
+        'PK_id': 'primary',
+        'uri': 'serialized',
+        'name': 'texte',
+    }
+
     def __init__(self, args={}):
         # Instantiate Parent
         super().__init__(args)
@@ -47,9 +54,8 @@ class Shop(Model):
     def _get_name(self):
         """ property return object attribute name"""
         return self.name
-    
-    @classmethod
-    def make_shops(cls,shops):
+
+    def make_shops(self,shops):
         """ create a new shop object then add to attribute list
 
         Keyword arguments:
@@ -71,30 +77,31 @@ class Shop(Model):
             # for each shop remove term en and pl
             for shop in shops:
                 response.append(Shop({'name': shop}))
-                shop_uri.append(serialized_title(shop))
+                shop_uri.append(shop)
 
-            # get categories already exist
-            db_shops = cls.find({'where': [('uri IN', shop_uri)]})
+            if len(shop_uri) > 0:
+                # get categories already exist
+                db_shops = self.find({'where': [('uri IN', shop_uri)]})
 
-            # var contains clone shop uri
-            add_shops = list(shop_uri)
+                # var contains clone shop uri
+                add_shops = list(shop_uri)
 
-            if len(db_shops) > 0:
-                for shop in db_shops:
-                    if shop.uri in shop_uri:
-                        add_shops.remove(shop.uri)
+                if len(db_shops) > 0:
+                    for shop in db_shops:
+                        if shop.uri in shop_uri:
+                            add_shops.remove(shop.uri)
 
-            # list of shops to create
-            if len(add_shops) > 0:
-                for shop in response:
-                    if shop.uri not in add_shops:
-                        response.remove(shop)
+                # list of shops to create
+                if len(add_shops) > 0:
+                    for shop in response:
+                        if shop.uri not in add_shops:
+                            response.remove(shop)
 
-                if len(response) > 0:
-                    cls.bulk(response)
-                    db_shops = cls.find({'where': [('uri IN', shop_uri)]})
+                    if len(response) > 0:
+                        self.bulk(response)
+                        db_shops = self.find({'where': [('uri IN', shop_uri)]})
 
-            response = db_shops
+                response = db_shops
         return response
         
         

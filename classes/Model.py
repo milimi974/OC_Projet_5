@@ -5,7 +5,7 @@
 
 # load dependencies
 from classes.Database import Database as DB
-
+from classes.Functions import *
 
 class Model(object):
     """ That Class manage method for BDD """
@@ -24,7 +24,10 @@ class Model(object):
 
             for field in self.fields:
                 if field in args:
-                    setattr(self, field, args[field])
+                    v = args[field]
+                    if hasattr(self, 'format_fields'):
+                        v = parse_field(self.format_fields, field, v)
+                    setattr(self, field, v)
 
     @property
     def __is_error(self):
@@ -42,7 +45,7 @@ class Model(object):
             table = str(self.table)
             if hasattr(self, 'PK_id') and int(self.PK_id) > 0:
                 # Update data
-                DB.update(table, fields, self)
+                DB.update(table, fields, self,)
             else:
                 # Save data
                 # if isset primary key id unset
@@ -58,7 +61,8 @@ class Model(object):
         """
 
         table = str(self.table)
-        return DB.search(table, request, False, self.__class__)
+        format_fields = dict(self.format_fields)
+        return DB.search(format_fields, table, request, False, self.__class__)
 
     def findone(self, request):
         """ Method search one answer
@@ -69,7 +73,8 @@ class Model(object):
         """
 
         table = str(self.table)
-        return DB.search(table, request, True, self.__class__)
+        format_fields = dict(self.format_fields)
+        return DB.search(format_fields , table, request, True, self.__class__)
 
     def findjoin(self, table1, request, table2=None):
         """ Method search join answer
@@ -83,7 +88,7 @@ class Model(object):
         if not table2:
             table2 = self.table
 
-        return DB.search(table1, request, False, self.__class__, table2)
+        return DB.search([], table1, request, False, self.__class__, table2)
 
     def bulk(self, data, update=False, tablename=None, fields=None):
         """ method for saving a bulk data
@@ -108,7 +113,6 @@ class Model(object):
             # Call method for update data
             DB.update(tablename, fields, data)
 
-
     def search_by(self, args):
         """ Make a search on one field
 
@@ -127,7 +131,8 @@ class Model(object):
             ]
         }
         table = str(self.table)
-        return DB.search(table, request, False, self.__class__)
+        format_fields = dict(self.format_fields)
+        return DB.search(format_fields, table, request, False, self.__class__)
 
     def search_ids(self, args):
         """ Make a search on one field
@@ -147,7 +152,8 @@ class Model(object):
             ]
         }
         table = str(self.table)
-        rep = DB.search(table, request, False, self.__class__)
+        format_fields = dict(self.format_fields)
+        rep = DB.search(format_fields, table, request, False, self.__class__)
         ids = []
         if rep:
             for el in rep:
@@ -172,7 +178,8 @@ class Model(object):
             ]
         }
         table = str(self.table)
-        rep = DB.search(table, request, True, self.__class__)
+        format_fields = dict(self.format_fields)
+        rep = DB.search(format_fields, table, request, True, self.__class__)
 
         if rep:
             return rep.PK_id

@@ -20,6 +20,11 @@ class FoodShop(Model):
         'FK_food_id',
         'FK_shop_id',
     ]
+    # Format fields
+    format_fields = {
+        'FK_food_id': 'primary',
+        'FK_shop_id': 'primary',
+    }
 
     def __init__(self, args={}):
         """ Initialized Food object
@@ -31,8 +36,7 @@ class FoodShop(Model):
         # Instantiate Parent
         super().__init__(args)
 
-    @classmethod
-    def make_food_shop(cls, food, food_id):
+    def make_food_shop(self, food, food_id):
         """ Add shops to new food
 
         Keyword arguments:
@@ -59,7 +63,7 @@ class FoodShop(Model):
                     for shop in db_shop:
                         name, id = shop
                         if name in shop_names:
-                            food_has_shop.append(Shop({'FK_food_id': food_id, 'FK_shop_id': id}))
+                            food_has_shop.append(FoodShop({'FK_food_id': food_id, 'FK_shop_id': id}))
                             shop_names.remove(name)
                             for sh in shops:
                                 if sh.name == name:
@@ -70,8 +74,8 @@ class FoodShop(Model):
                     (Shop()).bulk(shops)
                     db_ids = (Shop()).search_ids(('uri IN', shop_names))
                     for id in db_ids:
-                        food_has_shop.append(Shop({'FK_food_id': food_id, 'FK_shop_id': id}))
+                        food_has_shop.append(FoodShop({'FK_food_id': food_id, 'FK_shop_id': id}))
 
             # Add foods categories
             if len(food_has_shop) > 0:
-                cls.bulk(food_has_shop)
+                self.bulk(food_has_shop)
