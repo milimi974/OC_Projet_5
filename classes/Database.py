@@ -107,7 +107,6 @@ class Database(object):
                 print(req)
                 print(p)
 
-
         # Send request to database
         DB.cnx.commit()
         # Close query
@@ -267,7 +266,10 @@ class Database(object):
         return rep
 
     def __decode_rep(self, response):
-        """ decoding str from db """
+        """ decoding str from db
+        Method arguments:
+        response -- list || dict data from db
+        """
         rep = []
         if len(self.format_fields) > 0:
             if type(response) == list:
@@ -318,7 +320,14 @@ class Database(object):
         return conditions
 
     def __make_condition(self, link, key, value, join=False):
-        """ Static method format one condition where"""
+        """ Static method format one condition where
+
+        Method arguments:
+        link -- str AND || OR
+        key -- str field name + condition
+        value -- ??
+        join -- boolean for join request
+        """
 
         # extract condition on field
         act = key.split()
@@ -347,12 +356,11 @@ class Database(object):
             elif act[1] == 'LIKE':
                 value = "'{}'".format(parse_field(self.format_fields, act[0], value))
             elif type(value) == str and not join:
-                # Return formated condition
+                # Return format condition
                 value = "'{}'".format(parse_field(self.format_fields, act[0], value))
 
             return '{} {} {} {} '.format(link, act[0], act[1], value)
         return ''
-
 
     @staticmethod
     def select(tablename, fields, conditions, one=False, others=[], joins=''):
@@ -498,7 +506,7 @@ class Database(object):
 
     @property
     def cursor(self):
-        """ Return connection cursor for execute request"""
+        """ Return connection cursor for execute request """
         if self.is_connected:
             return self.db.cursor()
 

@@ -53,7 +53,6 @@ class Category(Model):
         }
         return self.findjoin('Food_has_Categories',args)
 
-
     def make_categories(self, categories):
         """ Return a list of categories object
 
@@ -77,23 +76,32 @@ class Category(Model):
             # for each category remove term en and pl
             for category in categories:
                 if 'en:' not in category and 'pl:' not in category:
-                    response.append(Category({'name': category}))
-                    categorie_uri.append(category)
+                    cat = Category({'name': category, 'uri': category})
+                    response.append(cat)
+                    categorie_uri.append(cat.uri)
+
+            print(categorie_uri)
 
             if len(categorie_uri) > 0:
                 # get categories already exist
-                db_categories = self.find({'where':[('uri IN', categorie_uri)]})
+                db_categories = self.find({'where': [('uri IN', categorie_uri)]})
 
                 # var contains clone category uri
                 add_categories = list(categorie_uri)
 
                 if len(db_categories) > 0:
                     for category in db_categories:
+                        print(category.uri)
+                        # if uri found in csv categories remove
                         if category.uri in add_categories:
                             add_categories.remove(category.uri)
 
+                print(add_categories)
+
                 # list of categories to create
                 if len(add_categories) > 0:
+                    """ remove from list category object 
+                    category to not create """
                     for category in response:
                         if category.uri not in add_categories:
                             response.remove(category)

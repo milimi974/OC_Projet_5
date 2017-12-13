@@ -7,6 +7,7 @@
 from classes.Database import Database as DB
 from classes.Functions import *
 
+
 class Model(object):
     """ That Class manage method for BDD """
 

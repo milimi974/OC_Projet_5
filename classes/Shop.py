@@ -76,8 +76,9 @@ class Shop(Model):
 
             # for each shop remove term en and pl
             for shop in shops:
-                response.append(Shop({'name': shop}))
-                shop_uri.append(shop)
+                s = Shop({'name': shop, 'uri': shop})
+                response.append(s)
+                shop_uri.append(s.uri)
 
             if len(shop_uri) > 0:
                 # get categories already exist
@@ -103,6 +104,4 @@ class Shop(Model):
 
                 response = db_shops
         return response
-        
-        
-      
+
