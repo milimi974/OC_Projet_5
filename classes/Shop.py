@@ -3,7 +3,6 @@
 
 # Import Model parent
 from classes.Model import Model
-from classes.Functions import *
 
 
 class Shop(Model):
@@ -29,9 +28,6 @@ class Shop(Model):
     def __init__(self, args={}):
         # Instantiate Parent
         super().__init__(args)
-
-        if 'name' in args:
-            self.uri = serialized_title(args['name'])
 
     def get_shops(self, ID):
         """ Method return all shops for one food
@@ -76,25 +72,25 @@ class Shop(Model):
 
             # for each shop remove term en and pl
             for shop in shops:
-                s = Shop({'name': shop, 'uri': shop})
-                response.append(s)
-                shop_uri.append(s.uri)
+                shop_obj = Shop({'name': shop, 'uri': shop})
+                response.append(shop_obj)
+                shop_uri.append(shop_obj.uri)
 
-            if len(shop_uri) > 0:
+            if shop_uri:
                 # get categories already exist
                 db_shops = self.find({'where': [('uri IN', shop_uri)]})
 
                 # var contains clone shop uri
                 add_shops = list(shop_uri)
 
-                if len(db_shops) > 0:
+                if db_shops:
                     for shop in db_shops:
                         if shop.uri in shop_uri:
                             add_shops.remove(shop.uri)
 
                 # list of shops to create
-                if len(add_shops) > 0:
-                    for shop in response:
+                if add_shops:
+                    for shop in list(response):
                         if shop.uri not in add_shops:
                             response.remove(shop)
 

@@ -74,13 +74,13 @@ def parse_field(format_fields, field, value):
             if type_name == "primary":
                 return int(value)
             elif type_name == "varchar":
-                return clear_title(value)
+                return clear_title(value).strip()
             elif type_name == "text":
                 return clear_texte(value)
             elif type_name == "url":
-                return value
+                return value.strip()
             elif type_name == "serialized":
-                return serialized_title(value)
+                return serialized_title(value).strip()
             elif type_name == "datetime":
                 return str(value)
 

@@ -11,7 +11,6 @@ from classes.FoodShop import FoodShop
 
 # Import Model parent
 from classes.Model import Model
-from classes.Functions import *
 
 
 class Food(Model):
@@ -71,7 +70,6 @@ class Food(Model):
                     # Grab shops from db
                     self.shops = (Shop()).make_shops(args['shops'])
 
-
     def bulk(self, data, update=False):
         """ Override parent method
 
@@ -81,7 +79,6 @@ class Food(Model):
         names -- list contain uri foods name
 
         """
-        print("Bulk child")
         # Call parent method
         Model.bulk(self,data, update)
 

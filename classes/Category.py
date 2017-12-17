@@ -1,8 +1,6 @@
 #!/usr/bin/env python3.5
 # coding: utf-8
 
-# import dependencies
-from classes.Functions import *
 
 # Import Model parent
 from classes.Model import Model
@@ -29,9 +27,6 @@ class Category(Model):
     }
 
     def __init__(self, args={}):
-
-        if 'name' in args:
-            self.uri = serialized_title(args['name'])
 
         # Instantiate Parent
         super().__init__(args)
@@ -71,44 +66,40 @@ class Category(Model):
             categories = categories.split(',')
 
             # Format categories name
-            categorie_uri = []
+            category_uri = []
 
             # for each category remove term en and pl
             for category in categories:
                 if 'en:' not in category and 'pl:' not in category:
                     cat = Category({'name': category, 'uri': category})
                     response.append(cat)
-                    categorie_uri.append(cat.uri)
+                    category_uri.append(cat.uri)
 
-            print(categorie_uri)
-
-            if len(categorie_uri) > 0:
+            if category_uri:
                 # get categories already exist
-                db_categories = self.find({'where': [('uri IN', categorie_uri)]})
+                db_categories = self.find({'where': [('uri IN', category_uri)]})
 
                 # var contains clone category uri
-                add_categories = list(categorie_uri)
+                add_categories = list(category_uri)
 
-                if len(db_categories) > 0:
+                if db_categories:
                     for category in db_categories:
-                        print(category.uri)
+
                         # if uri found in csv categories remove
                         if category.uri in add_categories:
                             add_categories.remove(category.uri)
 
-                print(add_categories)
-
                 # list of categories to create
-                if len(add_categories) > 0:
+                if add_categories:
                     """ remove from list category object 
                     category to not create """
-                    for category in response:
+                    for category in list(response):
                         if category.uri not in add_categories:
                             response.remove(category)
 
-                    if len(response) > 0:
+                    if response:
                         self.bulk(response)
-                        db_categories = self.find({'where': [('uri IN', categorie_uri)]})
+                        db_categories = self.find({'where': [('uri IN', category_uri)]})
 
                 response = db_categories
         return response
@@ -116,7 +107,6 @@ class Category(Model):
     def remove_category(self):
         pass
 
-    @property
-    def _get_name(self):
+    def get_name(self):
         """ property return object attribute name"""
         return self.name
