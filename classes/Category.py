@@ -23,7 +23,7 @@ class Category(Model):
     format_fields = {
         'PK_id': 'primary',
         'uri': 'serialized',
-        'name': 'texte',
+        'name': 'varchar',
     }
 
     def __init__(self, args={}):

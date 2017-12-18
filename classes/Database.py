@@ -204,6 +204,7 @@ class Database(object):
         """
         # set format field on object
         Database().format_fields = format_fields
+
         # Format fields
         fields = '*'
         if 'fields' in request:
@@ -262,6 +263,7 @@ class Database(object):
                 rep.append(classname(el))
         else:
             rep = classname(response)
+
         Database().format_fields = []
         return rep
 
@@ -271,7 +273,7 @@ class Database(object):
         response -- list || dict data from db
         """
         rep = []
-        if len(self.format_fields) > 0:
+        if self.format_fields:
             if type(response) == list:
                 for el in response:
                     x = {}
@@ -348,19 +350,19 @@ class Database(object):
                                       parse_field(self.format_fields, act[0], a) +
                                       "'" for a in value]))
                     else:
-                        value = '({})'.format(','.join(value))
+                        value = '({})'.format(','.join([str(el) for el in value]))
             elif act[1] == 'BETWEEN':
                 value = '{} AND {}'.format(
                     parse_field(self.format_fields, act[0], value[0]),
                     parse_field(self.format_fields, act[0], value[1]))
             elif act[1] == 'LIKE':
-                value = "'{}'".format(parse_field(self.format_fields, act[0], value))
+                value = "'{}'".format(str(parse_field(self.format_fields, act[0], value)))
             elif type(value) == str and not join:
                 # Return format condition
                 value = "'{}'".format(parse_field(self.format_fields, act[0], value))
 
             return '{} {} {} {} '.format(link, act[0], act[1], value)
-        return ''
+        return '{} {} {} '.format(link, act[0], value)
 
     @staticmethod
     def select(tablename, fields, conditions, one=False, others=[], joins=''):
@@ -392,10 +394,12 @@ class Database(object):
                     joins,
                     conditions,
                     others)
+
         try:
             query.execute(req)
         except:
             print(req)
+
 
         rep = []
         if query.rowcount > 0:

@@ -88,8 +88,8 @@ class Model(object):
         """
         if not table2:
             table2 = self.table
-
-        return DB.search([], table1, request, False, self.__class__, table2)
+        format_fields = dict(self.__class__.format_fields)
+        return DB.search(format_fields, table1, request, False, self.__class__, table2)
 
     def bulk(self, data, update=False, tablename=None, fields=None):
         """ method for saving a bulk data

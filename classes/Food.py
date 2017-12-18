@@ -36,12 +36,14 @@ class Food(Model):
         'code': 'varchar',
         'uri': 'serialized',
         'link': 'url',
-        'name': 'text',
+        'name': 'varchar',
         'description': 'text',
         'level': 'varchar',
         'created': 'datetime',
         'modified': 'datetime',
     }
+    # Pagination size
+    paginate = 10
 
     def __init__(self, args={}):
         """ Initialized Food object
@@ -140,6 +142,73 @@ class Food(Model):
                          'FK_category_id': category.PK_id})
                     ).remove()
 
+    def find_by_category(self, pk_id, page=1):
+        """ Return food list selected by category
+
+        Keyword arguments:
+        pk_id -- int category primary key
+        page -- int
+        """
+        current_page = page - 1
+
+        _from = current_page * self.paginate
+        max = self.paginate + 1
+
+        args = {
+            'where': [
+                ('Food_has_Categories.FK_category_id =', int(pk_id))
+            ],
+            'on': [
+                ('Foods.PK_id =', 'Food_has_Categories.FK_food_id'),
+            ],
+            'limit':[_from, max]
+        }
+        # get foods
+        foods = self.findjoin('Food_has_Categories', args)
+
+        # control if have a next page
+        next_page = 0
+        if len(foods) == max:
+            next_page = page + 1
+            del foods[-1]
+
+        # control if have a page before
+        before_page = 0
+        if page > 1:
+            before_page = page - 1
+
+        return {'next_page': next_page,'before_page': before_page, 'current_page': page, 'total': len(foods), 'response': foods}
+
+    def find_better_nutricode(self, aliment):
+        """ return the better aliment
+
+        Keyword arguments:
+        aliment -- object
+
+        """
+        args = {
+            'where': [
+                ('Food_has_Categories.FK_category_id IN', aliment.get_categories_ids),
+                ('Foods.level <>', ' '),
+            ],
+            'on': [
+                ('Foods.PK_id =', 'Food_has_Categories.FK_food_id'),
+            ],
+            'order': ['level'],
+            'limit': [1]
+        }
+        # get foods
+        food = self.findjoin('Food_has_Categories', args)
+
+        # return result if level better
+        if food:
+            print(food[0].level)
+            print(aliment.level)
+            if food[0].level < aliment.level:
+                return food[0]
+
+        return aliment
+
     @property
     def get_categories_uri(self):
         """ extract categories name formated """
@@ -152,6 +221,28 @@ class Food(Model):
         return cat_names
 
     @property
+    def get_categories_name(self):
+        """ extract categories name """
+
+        cat_names = []
+        if len(self.categories) > 0:
+            for cat in self.categories:
+                cat_names.append(cat.name)
+
+        return cat_names
+
+    @property
+    def get_categories_ids(self):
+        """ extract categories ids """
+
+        cat_ids = []
+        if self.categories:
+            for cat in self.categories:
+                cat_ids.append(cat.PK_id)
+
+        return cat_ids
+
+    @property
     def get_shops_uri(self):
         """ extract shops name formated """
 
@@ -159,6 +250,17 @@ class Food(Model):
         if len(self.shops) > 0:
             for shop in self.shops:
                 shop_names.append(shop.uri)
+
+        return shop_names
+
+    @property
+    def get_shops_name(self):
+        """ extract shops name"""
+
+        shop_names = []
+        if len(self.shops) > 0:
+            for shop in self.shops:
+                shop_names.append(shop.name)
 
         return shop_names
 
