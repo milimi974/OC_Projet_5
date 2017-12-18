@@ -43,7 +43,7 @@ class Food(Model):
         'modified': 'datetime',
     }
     # Pagination size
-    paginate = 10
+    paginate = 3
 
     def __init__(self, args={}):
         """ Initialized Food object
