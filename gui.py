@@ -247,6 +247,7 @@ class Gui(tk.Frame):
             self.status_bar['text'] = 'Recherche de l\'aliment de substitution'
             idx = int(w.curselection()[0])
             self.aliment = self.food_data['response'][idx]
+            self.description_box.delete(1.0, tk.END)
             self.display_food_description()
         else:
             self.current_food_idx = None

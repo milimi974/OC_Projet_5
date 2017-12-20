@@ -26,7 +26,6 @@ class Update:
         self.percent = 0.0
         self.entry_count = 0
 
-
     @property
     def update_db(self):
         """ Public property for updating database from csv"""

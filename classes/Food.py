@@ -202,8 +202,6 @@ class Food(Model):
 
         # return result if level better
         if food:
-            print(food[0].level)
-            print(aliment.level)
             if food[0].level < aliment.level:
                 return food[0]
 
