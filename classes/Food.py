@@ -43,7 +43,7 @@ class Food(Model):
         'modified': 'datetime',
     }
     # Pagination size
-    paginate = 3
+    paginate = 10
 
     def __init__(self, args={}):
         """ Initialized Food object
@@ -202,10 +202,14 @@ class Food(Model):
 
         # return result if level better
         if food:
-            if food[0].level < aliment.level:
-                return food[0]
+            level = 'f'
+            if not aliment.level == "":
+                level = aliment.level
 
-        return aliment
+            if food[0].level < level:
+                return [aliment, food[0]]
+
+        return [aliment]
 
     @property
     def get_categories_uri(self):

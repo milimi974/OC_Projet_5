@@ -75,6 +75,8 @@ class Gui(tk.Frame):
 
         # construct window
         self.build_window()
+        self.button_before_page.pack(side=tk.LEFT)
+        self.button_next_page.pack(side=tk.LEFT)
 
     def run(self):
         """ Display windows """
@@ -154,10 +156,12 @@ class Gui(tk.Frame):
         self.product_list.pack(fill="both", expand="yes")
         self.product_list.bind('<<ListboxSelect>>', self.bind_food_selected)
         self.button_before_page = tk.Button(label_frame_foods, text='Précedente',
-                                            command=self.display_before_page)
+                                            command=self.display_before_page,
+                                            state=tk.DISABLED)
         self.button_before_page.pack(side=tk.LEFT)
         self.button_next_page = tk.Button(label_frame_foods, text='Suivante',
-                                          command=self.display_next_page)
+                                          command=self.display_next_page,
+                                          state=tk.DISABLED)
         self.button_next_page.pack(side=tk.LEFT)
 
         container_paned.add(label_frame_foods)
@@ -168,7 +172,8 @@ class Gui(tk.Frame):
         self.description_box = tk.Text(label_frame_description)
         self.description_box.pack(fill="both", expand="yes")
         self.button_save_food = tk.Button(label_frame_description, text='Sauvegarder',
-                                          command=self.add_user_food)
+                                          command=self.add_user_food,
+                                          state=tk.DISABLED)
         self.button_save_food.pack(side=tk.LEFT)
         container_paned.add(label_frame_description)
 
@@ -223,6 +228,15 @@ class Gui(tk.Frame):
                 self.food_data = self.food.find_by_category(pk_id, page);
                 self.display_food_list()
 
+                if self.food_data['before_page'] > 1:
+                    self.button_before_page['state'] = tk.ACTIVE
+                else:
+                    self.button_before_page['state'] = tk.DISABLED
+                if self.food_data['next_page'] > 1:
+                    self.button_next_page['state'] = tk.ACTIVE
+                else:
+                    self.button_before_page['state'] = tk.DISABLED
+
     def display_food_list(self):
         """ Add food in list box"""
         if self.food_data:
@@ -245,9 +259,10 @@ class Gui(tk.Frame):
         w = event.widget
         if w.curselection():
             self.status_bar['text'] = 'Recherche de l\'aliment de substitution'
-            idx = int(w.curselection()[0])
-            self.aliment = self.food_data['response'][idx]
+            self.current_food_idx = int(w.curselection()[0])
+            self.aliment = self.food_data['response'][self.current_food_idx]
             self.description_box.delete(1.0, tk.END)
+            self.button_save_food['state'] = tk.ACTIVE
             self.display_food_description()
         else:
             self.current_food_idx = None
@@ -258,49 +273,64 @@ class Gui(tk.Frame):
         # A product selected
 
         if self.aliment:
-            food = self.food.find_better_nutricode(self.aliment)
-            self.description_box.insert(tk.END,
-                                        "Aliment : {} \n".format(food.name))
-            self.description_box.insert(tk.END,
-                                        "Description : {} \n".format(str(food.description)))
-            self.description_box.insert(tk.END,
-                                        "Categorie(s) : {} \n".format(','.join(food.get_categories_name)))
-            self.description_box.insert(tk.END,
-                                        "Magasin(s) : {} \n".format(','.join(food.get_shops_name)))
-            self.description_box.insert(tk.END,
-                                        "lien : {}".format(food.link))
-            self.status_bar['text'] = 'Affichage aliment de substitution : ' + str(food.name)
+            foods = self.food.find_better_nutricode(self.aliment)
+            for food in foods:
+                self.show_in_description_box(food)
+                self.description_box.insert(tk.END,
+                                            "--------------------------------"
+                                            "------------------------------------\n")
+            self.status_bar['text'] = 'Affichage aliment de substitution : {}'.format(str(food.name))
 
+    def show_in_description_box(self, food):
+        """ wrote on description box
+
+        Keyword arguments:
+        food -- object
+
+        """
+        self.description_box.insert(tk.END,
+                                    "Nutri-code : {} \n".format(str(food.level).upper()))
+        self.description_box.insert(tk.END,
+                                    "Aliment : {} \n".format(food.name))
+        self.description_box.insert(tk.END,
+                                    "Description : {} \n".format(str(food.description)))
+        self.description_box.insert(tk.END,
+                                    "Categorie(s) : {} \n".format(','.join(food.get_categories_name)))
+        self.description_box.insert(tk.END,
+                                    "Magasin(s) : {} \n".format(','.join(food.get_shops_name)))
+        self.description_box.insert(tk.END,
+                                    "lien : {}\n".format(food.link))
 
     def display_next_page(self):
         """ Display next page foods """
-        if self.food_data['next_page']:
+        if self.food_data and self.food_data['next_page']>0:
             self.display_category_food_list(self.food_data['next_page'])
 
     def display_before_page(self):
         """ Display before page foods """
-        if self.food_data['before_page']:
+        if self.food_data and self.food_data['before_page']>0:
             self.display_category_food_list(self.food_data['before_page'])
 
     def add_user_food(self):
         """ save user food selected """
-        if self.aliment:
-
+        if self.current_food_idx:
+            aliment = self.food_data['response'][self.current_food_idx]
             # if save doesn't exist
             args = {
                 'FK_user_id': 1,
-                'FK_food_id': self.aliment.PK_id
+                'FK_food_id': aliment.PK_id
             }
             user_food = UserFood(args)
             # check if save exist
-            exist = user_food.findone({'where':[('FK_user_id =', 1),('FK_food_id =', self.aliment.PK_id)]})
+            exist = user_food.findone({'where':[('FK_user_id =', 1),('FK_food_id =', aliment.PK_id)]})
             if not exist:
                 user_food.save()
-                self.status_bar['text'] = 'Sauvegarde : ' + str(self.aliment.name)
+                self.status_bar['text'] = 'Sauvegarde : ' + str(aliment.name)
             else:
                 self.status_bar['text'] = 'Sauvegarde déjà existante.'
 
-            self.aliment.name = None
+            self.current_food_idx = None
+        self.button_save_food['state'] = tk.DISABLED
 
     def update_data_base(self):
         """ update dat in database from Open data food """
@@ -311,3 +341,5 @@ class Gui(tk.Frame):
         self.product_list.delete(0, tk.END)
         self.description_box.delete(1.0, tk.END)
         self.aliment = None
+        self.current_food_idx = None
+        self.button_save_food['state'] = tk.DISABLED
