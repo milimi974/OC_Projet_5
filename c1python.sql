@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS `Foods` (
 
 CREATE TABLE IF NOT EXISTS `Food_has_Categories` (
   `FK_food_id` int(10) unsigned NOT NULL,
-  `FK_categorie_id` int(10) unsigned NOT NULL
+  `FK_category_id` int(10) unsigned NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -125,7 +125,7 @@ ALTER TABLE `Foods`
 -- Index pour la table `Food_has_Categories`
 --
 ALTER TABLE `Food_has_Categories`
- ADD PRIMARY KEY (`FK_food_id`,`FK_categorie_id`), ADD KEY `fk_Foods_has_Categories_Categories1_idx` (`FK_categorie_id`), ADD KEY `fk_Foods_has_Categories_Foods1_idx` (`FK_food_id`);
+ ADD PRIMARY KEY (`FK_food_id`,`FK_category_id`), ADD KEY `fk_Foods_has_Categories_Categories1_idx` (`FK_category_id`), ADD KEY `fk_Foods_has_Categories_Foods1_idx` (`FK_food_id`);
 
 --
 -- Index pour la table `Food_has_Shops`
