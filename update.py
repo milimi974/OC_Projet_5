@@ -42,8 +42,6 @@ class Update:
 
             # Max line for one request
             max_req = self.config['max_entries']
-            self.entry_count = reader.line_num
-            percent = float(self.entry_count / max_req)
             # Start loop to read each line
             for row in reader:
                 # Create a list of food object for each line
@@ -59,6 +57,7 @@ class Update:
             # Create last data
             if len(csv_foods) > 0:
                 Update.__create_foods(csv_foods)
+            print('End _ update')
 
     @staticmethod
     def __create_foods(foods):

@@ -177,7 +177,12 @@ class Food(Model):
         if page > 1:
             before_page = page - 1
 
-        return {'next_page': next_page,'before_page': before_page, 'current_page': page, 'total': len(foods), 'response': foods}
+        return {'next_page': next_page,
+                'before_page': before_page,
+                'current_page': page,
+                'total': len(foods),
+                'response': foods,
+                }
 
     def find_better_nutricode(self, aliment):
         """ return the better aliment

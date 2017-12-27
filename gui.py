@@ -141,7 +141,7 @@ class Gui(tk.Frame):
         label_frame_category = tk.LabelFrame(container_paned, text="Liste de catégories", padx=15, pady=15)
         label_frame_category.pack(fill="both", expand="yes")
 
-        self.category_list = tk.Listbox(label_frame_category, cursor="arrow")
+        self.category_list = tk.Listbox(label_frame_category)
         self.category_list.pack(fill="both", expand="yes")
         self.category_list.bind('<<ListboxSelect>>', self.bind_category_selected)
         container_paned.add(label_frame_category)
@@ -228,14 +228,15 @@ class Gui(tk.Frame):
                 self.food_data = self.food.find_by_category(pk_id, page);
                 self.display_food_list()
 
-                if self.food_data['before_page'] > 1:
+                if self.food_data['before_page'] > 0:
                     self.button_before_page['state'] = tk.ACTIVE
                 else:
                     self.button_before_page['state'] = tk.DISABLED
-                if self.food_data['next_page'] > 1:
+
+                if self.food_data['next_page'] > 0:
                     self.button_next_page['state'] = tk.ACTIVE
                 else:
-                    self.button_before_page['state'] = tk.DISABLED
+                    self.button_next_page['state'] = tk.DISABLED
 
     def display_food_list(self):
         """ Add food in list box"""
@@ -264,8 +265,6 @@ class Gui(tk.Frame):
             self.description_box.delete(1.0, tk.END)
             self.button_save_food['state'] = tk.ACTIVE
             self.display_food_description()
-        else:
-            self.current_food_idx = None
 
     def display_food_description(self):
         """ Display the description of food selected """
@@ -313,7 +312,8 @@ class Gui(tk.Frame):
 
     def add_user_food(self):
         """ save user food selected """
-        if self.current_food_idx:
+
+        if not self.current_food_idx == None:
             aliment = self.food_data['response'][self.current_food_idx]
             # if save doesn't exist
             args = {
@@ -343,3 +343,5 @@ class Gui(tk.Frame):
         self.aliment = None
         self.current_food_idx = None
         self.button_save_food['state'] = tk.DISABLED
+        self.button_before_page['state'] = tk.DISABLED
+        self.button_next_page['state'] = tk.DISABLED

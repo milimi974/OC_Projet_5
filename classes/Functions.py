@@ -41,6 +41,7 @@ def clear_varchar(text):
     text = re.sub('r"[\']"g', "\\'", text)
     return text
 
+
 def decode_varchar(text):
     """ escape ' """
     return re.sub('r"[\\ ]"g', "'", str(text))
@@ -50,7 +51,7 @@ def decode_text(text):
     """ decode encoding text with clear_text"""
 
     if type(text) == str:
-        text = '"{}"'.format(text)
+        text = '\"{}\"'.format(text)
         return json.loads(text)
     return text
 

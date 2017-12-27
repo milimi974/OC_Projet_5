@@ -12,3 +12,4 @@ if __name__ == '__main__':
     root = tk.Tk()
     app = Gui(root)
     app.run()
+    #app.update_data_base()
